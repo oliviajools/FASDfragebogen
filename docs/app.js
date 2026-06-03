@@ -174,11 +174,23 @@
     const printAnswers = document.getElementById('btn-print-answers');
     if (printAnswers) {
       const printUrl = getParam('printurl');
+      console.log('[FASQ] printurl parameter:', printUrl);
       if (printUrl && /^https?:\/\//.test(printUrl)) {
         printAnswers.href = printUrl;
         printAnswers.style.display = '';
       } else {
-        printAnswers.style.display = 'none';
+        // Button bleibt sichtbar, gibt aber Hinweis statt zu reloaden
+        printAnswers.href = '#';
+        printAnswers.removeAttribute('target');
+        printAnswers.addEventListener('click', function (e) {
+          e.preventDefault();
+          alert(
+            'Die LimeSurvey-Antwortübersicht ist nicht verfügbar.\n\n' +
+            'Bitte stellen Sie sicher, dass in den LimeSurvey-Einstellungen ' +
+            'der Parameter &printurl={PRINTANSWERSURL} am Ende der End-URL steht.\n\n' +
+            'Aktueller Wert: ' + (printUrl || '(leer)')
+          );
+        });
       }
     }
 
