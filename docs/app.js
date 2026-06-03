@@ -170,28 +170,12 @@
       printPage.addEventListener('click', function () { window.print(); });
     }
 
-    // Print-Answers Link (LimeSurvey-eigene Übersichtsseite)
-    const printAnswers = document.getElementById('btn-print-answers');
-    if (printAnswers) {
-      const printUrl = getParam('printurl');
-      console.log('[FASQ] printurl parameter:', printUrl);
-      if (printUrl && /^https?:\/\//.test(printUrl)) {
-        printAnswers.href = printUrl;
-        printAnswers.style.display = '';
-      } else {
-        // Button bleibt sichtbar, gibt aber Hinweis statt zu reloaden
-        printAnswers.href = '#';
-        printAnswers.removeAttribute('target');
-        printAnswers.addEventListener('click', function (e) {
-          e.preventDefault();
-          alert(
-            'Die LimeSurvey-Antwortübersicht ist nicht verfügbar.\n\n' +
-            'Bitte stellen Sie sicher, dass in den LimeSurvey-Einstellungen ' +
-            'der Parameter &printurl={PRINTANSWERSURL} am Ende der End-URL steht.\n\n' +
-            'Aktueller Wert: ' + (printUrl || '(leer)')
-          );
-        });
-      }
+    // Eigene Antwortübersicht (rendert Tabelle aus URL-Parametern + questions.js)
+    const showAnswersBtn = document.getElementById('btn-show-answers');
+    if (showAnswersBtn) {
+      showAnswersBtn.addEventListener('click', function () {
+        openAnswersTableWindow(data);
+      });
     }
 
     // Empfehlungsschreiben immer ermöglichen (Text passt sich an Ergebnis an)
@@ -212,6 +196,165 @@
       const iso = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
       assessmentDateInput.value = iso;
     }
+  }
+
+  // --- Antwortübersicht-Tabelle ---
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function findAnswerLabel(question, code) {
+    if (!code || !question.answers || !question.answers.length) return null;
+    for (let i = 0; i < question.answers.length; i++) {
+      if (question.answers[i].code === code) return question.answers[i];
+    }
+    return null;
+  }
+
+  function isAnswered(value) {
+    if (value === null || value === undefined) return false;
+    const s = String(value).trim();
+    if (!s) return false;
+    if (/<[a-z\/!][^>]*>/i.test(s)) return false;
+    if (/^\{[^}]+\}$/.test(s)) return false;
+    return true;
+  }
+
+  function openAnswersTableWindow(data) {
+    const questions = window.FASQ_QUESTIONS || [];
+    const params = new URLSearchParams(window.location.search);
+
+    // Gruppieren nach group
+    const byGroup = {};
+    const groupOrder = [];
+    questions.forEach(function (q) {
+      // Personalia / Eingangsfragen separat behandelt – hier nur Skala-Fragen
+      if (q.type !== 'L' && q.type !== 'F' && q.type !== 'O') return;
+      if (!byGroup[q.group]) { byGroup[q.group] = []; groupOrder.push(q.group); }
+      byGroup[q.group].push(q);
+    });
+
+    let totalScore = 0;
+    let answeredCount = 0;
+    const groupSections = groupOrder.map(function (groupName) {
+      const rows = byGroup[groupName].map(function (q, idx) {
+        const raw = params.get(q.code);
+        const answered = isAnswered(raw);
+        const matched = answered ? findAnswerLabel(q, raw) : null;
+        const score = matched ? Number(matched.score) || 0 : 0;
+        if (answered) { answeredCount++; totalScore += score; }
+        const answerCell = matched
+          ? escapeHtml(matched.label)
+          : (answered ? escapeHtml(raw) : '<span class="muted-cell">nicht beantwortet</span>');
+        const scoreCell = matched ? String(score) : '\u2014';
+        return (
+          '<tr>' +
+          '<td class="num">' + (idx + 1) + '</td>' +
+          '<td class="qtext">' + escapeHtml(q.text) + '</td>' +
+          '<td class="answer">' + answerCell + '</td>' +
+          '<td class="score">' + scoreCell + '</td>' +
+          '</tr>'
+        );
+      }).join('');
+
+      return (
+        '<section class="group-section">' +
+        '<h2>' + escapeHtml(groupName) + '</h2>' +
+        '<table class="answers-table">' +
+        '<thead><tr><th>#</th><th>Frage</th><th>Antwort</th><th class="score-col">Score</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+        '</table>' +
+        '</section>'
+      );
+    }).join('');
+
+    const today = formatDateDE(new Date());
+    const header = (
+      '<header class="report-head">' +
+      '<div class="head-left">' +
+      '<h1>FASQ-Antwortübersicht</h1>' +
+      '<p class="report-meta">' +
+      (data.fullName ? '<strong>Name:</strong> ' + escapeHtml(data.fullName) + ' &middot; ' : '') +
+      (data.ageRaw ? '<strong>Alter:</strong> ' + escapeHtml(data.ageRaw) + ' Jahre &middot; ' : '') +
+      '<strong>Gruppe:</strong> ' + escapeHtml(data.group || '\u2014') +
+      '</p>' +
+      '<p class="report-meta"><strong>Datum:</strong> ' + today + '</p>' +
+      '</div>' +
+      '<div class="head-right">' +
+      '<div class="score-box">' +
+      '<div class="score-label">FASQ-Score</div>' +
+      '<div class="score-value">' + escapeHtml(String(data.score)) + '</div>' +
+      '<div class="score-sub">' + answeredCount + ' Fragen beantwortet</div>' +
+      '</div>' +
+      '</div>' +
+      '</header>'
+    );
+
+    const toolbar = (
+      '<div class="toolbar no-print">' +
+      '<button onclick="window.print()">Drucken / PDF</button>' +
+      '<button onclick="window.close()">Schließen</button>' +
+      '</div>'
+    );
+
+    const styles = (
+      '<style>' +
+      '*{box-sizing:border-box;}' +
+      'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#132235;margin:0;padding:20px 28px;line-height:1.45;background:#f5f7fa;}' +
+      '.report{max-width:920px;margin:0 auto;background:white;padding:30px 36px;box-shadow:0 2px 8px rgba(0,0,0,0.08);border-radius:6px;}' +
+      '.report-head{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;border-bottom:2px solid #132235;padding-bottom:14px;margin-bottom:24px;}' +
+      '.report-head h1{margin:0 0 6px;font-size:22px;}' +
+      '.report-meta{margin:4px 0;font-size:13px;color:#374151;}' +
+      '.score-box{background:#132235;color:white;border-radius:6px;padding:14px 20px;text-align:center;min-width:140px;}' +
+      '.score-label{font-size:11px;letter-spacing:0.05em;text-transform:uppercase;opacity:0.9;}' +
+      '.score-value{font-size:36px;font-weight:800;line-height:1;margin:4px 0;}' +
+      '.score-sub{font-size:11px;opacity:0.8;}' +
+      '.group-section{margin-bottom:28px;}' +
+      '.group-section h2{font-size:15px;background:#132235;color:white;padding:8px 12px;margin:0 0 0;border-radius:4px 4px 0 0;}' +
+      '.answers-table{width:100%;border-collapse:collapse;font-size:12px;}' +
+      '.answers-table th,.answers-table td{border:1px solid #d8dee8;padding:6px 8px;text-align:left;vertical-align:top;}' +
+      '.answers-table th{background:#eef2f7;font-weight:600;font-size:11px;}' +
+      '.answers-table .num{width:32px;text-align:center;color:#6b7280;}' +
+      '.answers-table .qtext{width:55%;}' +
+      '.answers-table .answer{width:30%;}' +
+      '.answers-table .score{width:50px;text-align:center;font-weight:600;}' +
+      '.answers-table .score-col{width:50px;text-align:center;}' +
+      '.muted-cell{color:#9ca3af;font-style:italic;}' +
+      '.toolbar{position:sticky;top:0;background:#f5f7fa;padding:10px 0;margin-bottom:16px;display:flex;gap:10px;}' +
+      '.toolbar button{padding:8px 16px;border:0;border-radius:4px;background:#132235;color:white;font-weight:600;cursor:pointer;font-size:13px;}' +
+      '.toolbar button:hover{background:#0a1322;}' +
+      '@media print{' +
+      'body{background:white;padding:0;}' +
+      '.report{box-shadow:none;border-radius:0;padding:0;max-width:100%;}' +
+      '.no-print{display:none !important;}' +
+      '.group-section{break-inside:avoid;}' +
+      '.answers-table tr{break-inside:avoid;}' +
+      '@page{size:A4 portrait;margin:1.5cm;}' +
+      '}' +
+      '</style>'
+    );
+
+    const html = (
+      '<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8">' +
+      '<title>FASQ-Antwortübersicht</title>' + styles + '</head>' +
+      '<body>' + toolbar +
+      '<div class="report">' + header + groupSections + '</div>' +
+      '</body></html>'
+    );
+
+    const win = window.open('', '_blank', 'width=1000,height=1100');
+    if (!win) {
+      alert('Bitte erlauben Sie Popups für diese Seite.');
+      return;
+    }
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+    win.focus();
   }
 
   // --- Empfehlungstext basierend auf Score/Alter ---
