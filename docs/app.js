@@ -30,7 +30,12 @@
   function getParam(name, fallback) {
     const params = new URLSearchParams(window.location.search);
     const v = params.get(name);
-    return v === null || v === '' ? (fallback === undefined ? '' : fallback) : v;
+    if (v === null || v === '') return fallback === undefined ? '' : fallback;
+    // Filter out LimeSurvey EM error HTML or any HTML/script markup
+    if (/<[a-z\/!][^>]*>/i.test(v)) return fallback === undefined ? '' : fallback;
+    // Filter out unresolved placeholders like {G02Q02_SQ001}
+    if (/^\{[^}]+\}$/.test(v.trim())) return fallback === undefined ? '' : fallback;
+    return v;
   }
 
   function toNumber(v, fallback) {
@@ -110,8 +115,8 @@
     setText('data-group', data.group);
 
     if (data.height || data.weight) {
-      const h = data.height || '-';
-      const w = data.weight || '-';
+      const h = data.height || '\u2014';
+      const w = data.weight || '\u2014';
       setText('data-size', `${h} cm / ${w} kg`);
     } else {
       setText('data-size', '\u2014');
