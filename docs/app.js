@@ -151,15 +151,34 @@
     const printEmpfehlung = document.getElementById('btn-print-empfehlung');
     const empfehlungSection = document.getElementById('empfehlung-section');
 
-    if (mailSelf) {
-      if (data.email) {
-        mailSelf.href = buildMailto(data.email, 'FASQ.online Ergebnisbericht', body);
+    // E-Mail-Override-Eingabefeld
+    const emailOverride = document.getElementById('email-override');
+    if (emailOverride && data.email) {
+      emailOverride.value = data.email;
+    }
+
+    function updateMailSelfHref() {
+      if (!mailSelf) return;
+      const overrideVal = emailOverride ? emailOverride.value.trim() : '';
+      const targetEmail = overrideVal || data.email;
+      const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(targetEmail || '');
+      if (valid) {
+        mailSelf.href = buildMailto(targetEmail, 'FASQ.online Ergebnisbericht', body);
+        mailSelf.removeAttribute('aria-disabled');
+        mailSelf.style.opacity = '';
+        mailSelf.style.pointerEvents = '';
+        mailSelf.title = '';
       } else {
+        mailSelf.href = '#';
         mailSelf.setAttribute('aria-disabled', 'true');
         mailSelf.style.opacity = '0.5';
         mailSelf.style.pointerEvents = 'none';
-        mailSelf.title = 'Keine E-Mail-Adresse angegeben';
+        mailSelf.title = 'Bitte eine gültige E-Mail-Adresse eingeben';
       }
+    }
+    updateMailSelfHref();
+    if (emailOverride) {
+      emailOverride.addEventListener('input', updateMailSelfHref);
     }
 
     if (mailCenter) {

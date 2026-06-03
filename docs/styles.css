@@ -144,6 +144,30 @@ html, body {
 
 .actions-section .card-title { margin-bottom: 16px; }
 
+.email-input-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.email-input-row input[type="email"] {
+  padding: 11px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 14px;
+  background: white;
+  color: var(--color-text);
+  max-width: 420px;
+}
+
+.email-input-row input[type="email"]:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(31, 60, 110, 0.15);
+}
+
 .actions-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
