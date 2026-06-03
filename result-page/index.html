@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FASQ.online - Ergebnis</title>
+  <meta name="description" content="FASQ.online Ergebnisbericht und Empfehlung zur FASD-Diagnostik" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="hero" id="report">
+      <div class="hero-inner">
+        <div class="hero-text">
+          <h1>FASQ.online Ergebnisbericht</h1>
+          <p class="subtitle">Vielen Dank für Ihre Teilnahme.</p>
+        </div>
+        <div class="hero-logo">
+          <img src="https://fasd-fz-hh.limesurvey.net/upload/surveys/881996/images/FASD_Logo_.png" alt="FASD Fachzentrum Hamburg e.V." onerror="this.style.display='none'" />
+        </div>
+      </div>
+    </header>
+
+    <section class="card" aria-labelledby="person-heading">
+      <h2 id="person-heading" class="card-title">Angaben zur Person</h2>
+      <dl class="person-grid">
+        <div><dt>Name</dt><dd id="data-name">&mdash;</dd></div>
+        <div><dt>Alter</dt><dd id="data-age">&mdash;</dd></div>
+        <div><dt>E-Mail</dt><dd id="data-email">&mdash;</dd></div>
+        <div><dt>PLZ</dt><dd id="data-plz">&mdash;</dd></div>
+        <div><dt>Gruppe</dt><dd id="data-group">&mdash;</dd></div>
+        <div><dt>Größe / Gewicht</dt><dd id="data-size">&mdash;</dd></div>
+      </dl>
+    </section>
+
+    <section class="result-card" aria-labelledby="result-heading">
+      <div class="result-score">
+        <span class="result-label">Erreichte Punktzahl</span>
+        <span class="result-value" id="data-score">0</span>
+      </div>
+      <div class="result-text">
+        <h2 id="recommendation-title" class="result-recommendation">&mdash;</h2>
+        <p class="result-description" id="recommendation-text">&mdash;</p>
+      </div>
+    </section>
+
+    <section class="card thanks-section">
+      <p><strong>Mit besten Grüßen Ihr FASD-Fachzentrum Hamburg e.V.</strong></p>
+      <p>Eine Danksagung an Dr. R. Feldmann / Tagesklinik Walstedde und vielen Dank für die finanzielle Förderung durch die Stadt Hamburg.</p>
+      <img class="funding-logo" src="https://fasd-fz-hh.limesurvey.net/upload/surveys/881996/images/logo-hamburg-fhh-sozialbehoerde-576x208%20(002).png" alt="Sozialbehörde Hamburg" onerror="this.style.display='none'" />
+    </section>
+
+    <section class="actions-section no-print">
+      <h2 class="card-title">Aktionen</h2>
+      <div class="actions-grid">
+        <button class="btn btn-primary" id="btn-print-page">Seite als PDF speichern</button>
+        <a class="btn btn-primary" id="btn-mail-self" href="#">Ergebnis an mich senden</a>
+        <a class="btn btn-primary" id="btn-mail-center" href="#">Ergebnis ans Fachzentrum senden</a>
+      </div>
+      <p class="actions-hint">
+        <strong>PDF:</strong> Öffnet den Druckdialog – wählen Sie „Als PDF speichern".
+        <strong>E-Mail:</strong> Öffnet Ihr E-Mail-Programm mit vorausgefülltem Text.
+      </p>
+    </section>
+
+    <section class="card empfehlung-section no-print" id="empfehlung-section">
+      <h2 class="card-title">Empfehlungsschreiben drucken</h2>
+      <p class="muted">Geben Sie optional den Namen der betroffenen Person ein, der im Empfehlungsschreiben verwendet werden soll.</p>
+      <div class="empfehlung-form">
+        <label for="person-name" class="visually-hidden">Name der betroffenen Person</label>
+        <input type="text" id="person-name" placeholder="Name der betroffenen Person" autocomplete="off" />
+        <button class="btn btn-primary" id="btn-print-empfehlung">Empfehlungsschreiben drucken</button>
+      </div>
+    </section>
+
+    <footer class="footer no-print">
+      <p>&copy; <span id="current-year"></span> FASD-Fachzentrum Hamburg e.V.</p>
+    </footer>
+  </main>
+
+  <template id="empfehlung-template">
+    <div class="empfehlung-print">
+      <div class="empfehlung-header">
+        <div>
+          <strong>FASD-Fachzentrum Hamburg e.V.</strong><br />
+          <span class="muted">Empfehlung zur weiterführenden Diagnostik</span>
+        </div>
+        <div class="empfehlung-date">Datum: <span data-field="date"></span></div>
+      </div>
+      <h1>FASQ-Einschätzung &ndash; Empfehlung</h1>
+      <p>Sehr geehrte Damen und Herren,</p>
+      <p>aufgrund der durchgeführten FASQ-Einschätzung empfehlen wir bei <strong><span data-field="name"></span></strong> eine weiterführende fachärztliche Abklärung auf <abbr title="Fetal Alcohol Spectrum Disorder">FASD</abbr>.</p>
+      <p><strong>Die Einschätzung ergab:</strong></p>
+      <ul>
+        <li>Gesamtpunktzahl: <strong><span data-field="score"></span></strong></li>
+        <li>Altersgruppe: <strong><span data-field="group"></span></strong></li>
+        <li>Bewertung: <strong><span data-field="recommendation"></span></strong></li>
+      </ul>
+      <p>Wir empfehlen, eine umfängliche fachärztliche Abklärung auf FASD durchführen zu lassen, um eine fundierte Diagnose und entsprechende Therapieansätze zu ermöglichen.</p>
+      <p>Bei Rückfragen stehen wir Ihnen gerne zur Verfügung.</p>
+      <p class="signature">Mit freundlichen Grüßen<br /><br /><strong>FASD-Fachzentrum Hamburg e.V.</strong></p>
+    </div>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
