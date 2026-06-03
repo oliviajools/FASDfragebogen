@@ -65,12 +65,30 @@
 
     <section class="card empfehlung-section no-print" id="empfehlung-section">
       <h2 class="card-title">Empfehlungsschreiben drucken</h2>
-      <p class="muted">Geben Sie optional den Namen der betroffenen Person ein, der im Empfehlungsschreiben verwendet werden soll.</p>
-      <div class="empfehlung-form">
-        <label for="person-name" class="visually-hidden">Name der betroffenen Person</label>
-        <input type="text" id="person-name" placeholder="Name der betroffenen Person" autocomplete="off" />
-        <button class="btn btn-primary" id="btn-print-empfehlung">Empfehlungsschreiben drucken</button>
+      <p class="muted">Personalisieren Sie das Empfehlungsschreiben. Alle Felder sind optional.</p>
+      <div class="empfehlung-form-grid">
+        <label>
+          <span class="form-label">Anrede</span>
+          <select id="anrede">
+            <option value="Sehr geehrte Damen und Herren">Sehr geehrte Damen und Herren</option>
+            <option value="Sehr geehrte Frau">Sehr geehrte Frau</option>
+            <option value="Sehr geehrter Herr">Sehr geehrter Herr</option>
+          </select>
+        </label>
+        <label>
+          <span class="form-label">Name Empfänger:in</span>
+          <input type="text" id="recipient-name" placeholder="z.B. Mustermann" autocomplete="off" />
+        </label>
+        <label>
+          <span class="form-label">Beziehung zur Person</span>
+          <input type="text" id="relation" placeholder="z.B. Pflegetochter, Sohn, Patient" autocomplete="off" value="betreffende Person" />
+        </label>
+        <label>
+          <span class="form-label">Datum der Erhebung</span>
+          <input type="date" id="assessment-date" />
+        </label>
       </div>
+      <button class="btn btn-primary btn-large" id="btn-print-empfehlung">Empfehlungsschreiben drucken</button>
     </section>
 
     <footer class="footer no-print">
@@ -79,26 +97,40 @@
   </main>
 
   <template id="empfehlung-template">
-    <div class="empfehlung-print">
-      <div class="empfehlung-header">
-        <div>
-          <strong>FASD-Fachzentrum Hamburg e.V.</strong><br />
-          <span class="muted">Empfehlung zur weiterführenden Diagnostik</span>
-        </div>
-        <div class="empfehlung-date">Datum: <span data-field="date"></span></div>
+    <div class="letter">
+      <div class="letter-letterhead">
+        <img class="letter-logo" src="https://fasd-fz-hh.limesurvey.net/upload/surveys/881996/images/FASD_Logo_.png" alt="FASD-Fachzentrum Hamburg e.V." />
+        <div class="letter-address-line">Rothenbaumchaussee 114 &middot; 20149 Hamburg</div>
       </div>
-      <h1>FASQ-Einschätzung &ndash; Empfehlung</h1>
-      <p>Sehr geehrte Damen und Herren,</p>
-      <p>aufgrund der durchgeführten FASQ-Einschätzung empfehlen wir bei <strong><span data-field="name"></span></strong> eine weiterführende fachärztliche Abklärung auf <abbr title="Fetal Alcohol Spectrum Disorder">FASD</abbr>.</p>
-      <p><strong>Die Einschätzung ergab:</strong></p>
-      <ul>
-        <li>Gesamtpunktzahl: <strong><span data-field="score"></span></strong></li>
-        <li>Altersgruppe: <strong><span data-field="group"></span></strong></li>
-        <li>Bewertung: <strong><span data-field="recommendation"></span></strong></li>
-      </ul>
-      <p>Wir empfehlen, eine umfängliche fachärztliche Abklärung auf FASD durchführen zu lassen, um eine fundierte Diagnose und entsprechende Therapieansätze zu ermöglichen.</p>
-      <p>Bei Rückfragen stehen wir Ihnen gerne zur Verfügung.</p>
-      <p class="signature">Mit freundlichen Grüßen<br /><br /><strong>FASD-Fachzentrum Hamburg e.V.</strong></p>
+
+      <div class="letter-recipient">
+        FASD-Fachzentrum Hamburg e.V., Rothenbaumchaussee 114,<br />
+        20149 Hamburg<br />
+        Zur Vorlage
+      </div>
+
+      <div class="letter-date" data-field="date"></div>
+
+      <h1 class="letter-title">FASQ Einschätzung</h1>
+
+      <p class="letter-salutation" data-field="salutation"></p>
+
+      <p>im folgenden erhalten Sie unsere Empfehlung in Bezug auf die Erhebung durch den <strong>FASQ</strong>, den Sie uns am <span data-field="assessmentDate"></span> vorgelegt haben und auf Ihre/n <span data-field="relation"></span> beziehen.</p>
+
+      <p>Der Fragenkatalog <strong>FASQ</strong> (Fetal Alcohol Symptoms Questionnaire) wurde von Dr. rer. medic Reinhold Feldmann/Klinik Walstedde entwickelt. Es handelt sich hierbei um differentialdiagnostische Fragestellungen zur Unterstützung (z.B. im Diagnoseverfahren). Gerade bei jenen Probanden, bei denen sich die typischen Merkmale nicht finden lassen oder bislang nicht diagnostiziert werden konnten dient der FASQ als Ersteinschätzungsbogen zu FASD und soll von verwechselbaren Störungen (insbesondere ADHS, Autismus oder Deprivation) unterscheiden. Des Weiteren kann mit Hilfe des FASQ abgewogen werden, ob eine fachärztliche Konsultation für eine FASD-Diagnostik/Abklärung empfohlen wird.</p>
+
+      <p class="letter-score">Es wurde ein <strong>FASQ-Score von <span data-field="score"></span></strong> ermittelt</p>
+
+      <p class="letter-recommendation" data-field="recommendationParagraph"></p>
+
+      <p class="letter-greeting">Mit besten Grüßen</p>
+
+      <div class="letter-signature">
+        <p class="letter-signature-name">Timm F. Theen</p>
+        <p class="letter-signature-role">-Projektleitung-</p>
+        <p class="letter-signature-contact"><a href="mailto:t.theen@fasd-fachzentrum.hamburg">t.theen@fasd-fachzentrum.hamburg</a></p>
+        <p class="letter-signature-contact">Nach Absprache: <a href="tel:+4915165117742">0151 65117742</a></p>
+      </div>
     </div>
   </template>
 

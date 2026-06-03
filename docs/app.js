@@ -170,70 +170,92 @@
       printPage.addEventListener('click', function () { window.print(); });
     }
 
-    // Empfehlungsschreiben nur anzeigen, wenn positives Ergebnis
+    // Empfehlungsschreiben immer ermöglichen (Text passt sich an Ergebnis an)
     if (empfehlungSection) {
-      empfehlungSection.style.display = positive ? '' : 'none';
+      empfehlungSection.style.display = '';
     }
 
     if (printEmpfehlung) {
       printEmpfehlung.addEventListener('click', function () {
-        openEmpfehlungWindow(data, recommendationText);
+        openEmpfehlungWindow(data);
       });
+    }
+
+    // Heutiges Datum als Default in das Erhebungsdatum-Feld
+    const assessmentDateInput = document.getElementById('assessment-date');
+    if (assessmentDateInput && !assessmentDateInput.value) {
+      const t = new Date();
+      const iso = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+      assessmentDateInput.value = iso;
     }
   }
 
+  // --- Empfehlungstext basierend auf Score/Alter ---
+  function buildRecommendationParagraph(score, age) {
+    const positive = evaluateRecommendation(score, age);
+    if (positive) {
+      return 'Mit einem Gesamtwert von ' + score + ' empfehlen wir bei Kindern ab sechs Jahren, Jugendlichen und Erwachsenen dringend die fachärztliche Abklärung auf FASD. Für weitere Fragen zum Themenkomplex von FASD stehen wir in Form einer kostenlosen Erstberatung gerne zur Verfügung und verbleiben';
+    }
+    return 'Mit einem Gesamtwert von ' + score + ' liegt aktuell keine Empfehlung für eine fachärztliche FASD-Abklärung vor. Bei Rückfragen oder dem Wunsch nach einer Beratung stehen wir Ihnen in Form einer kostenlosen Erstberatung gerne zur Verfügung und verbleiben';
+  }
+
+  // --- Anrede zusammenbauen ---
+  function buildSalutation(anrede, recipientName) {
+    const a = (anrede || 'Sehr geehrte Damen und Herren').trim();
+    const n = (recipientName || '').trim();
+    if (a === 'Sehr geehrte Damen und Herren') return a + ',';
+    if (!n) return a + ',';
+    return a + ' ' + n + ',';
+  }
+
   // --- Empfehlungs-Druck-Fenster ---
-  function openEmpfehlungWindow(data, recommendationText) {
-    const nameInput = document.getElementById('person-name');
-    const personName = (nameInput && nameInput.value.trim()) || data.fullName || 'der betroffenen Person';
+  function openEmpfehlungWindow(data) {
+    const anrede = document.getElementById('anrede') ? document.getElementById('anrede').value : 'Sehr geehrte Damen und Herren';
+    const recipientName = document.getElementById('recipient-name') ? document.getElementById('recipient-name').value : '';
+    const relationInput = document.getElementById('relation');
+    const relation = (relationInput && relationInput.value.trim()) || 'betreffende Person';
+    const assessmentDateInput = document.getElementById('assessment-date');
+    let assessmentDate;
+    if (assessmentDateInput && assessmentDateInput.value) {
+      assessmentDate = formatDateDE(new Date(assessmentDateInput.value));
+    } else {
+      assessmentDate = formatDateDE(new Date());
+    }
 
     const template = document.getElementById('empfehlung-template');
     if (!template) return;
 
     const clone = template.content.cloneNode(true);
     clone.querySelector('[data-field="date"]').textContent = formatDateDE(new Date());
-    clone.querySelector('[data-field="name"]').textContent = personName;
+    clone.querySelector('[data-field="salutation"]').textContent = buildSalutation(anrede, recipientName);
+    clone.querySelector('[data-field="assessmentDate"]').textContent = assessmentDate;
+    clone.querySelector('[data-field="relation"]').textContent = relation;
     clone.querySelector('[data-field="score"]').textContent = String(data.score);
-    clone.querySelector('[data-field="group"]').textContent = data.group || '\u2014';
-    clone.querySelector('[data-field="recommendation"]').textContent = recommendationText;
+    clone.querySelector('[data-field="recommendationParagraph"]').textContent = buildRecommendationParagraph(data.score, data.age);
 
     const wrapper = document.createElement('div');
     wrapper.appendChild(clone);
     const html = wrapper.innerHTML;
 
-    const styles = `
-      <style>
-        @page { size: portrait; margin: 2cm; }
-        body { font-family: Georgia, "Times New Roman", serif; color: #132235; line-height: 1.6; font-size: 14px; padding: 20px; }
-        .empfehlung-print { max-width: 720px; margin: 0 auto; }
-        .empfehlung-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; border-bottom: 2px solid #132235; padding-bottom: 12px; }
-        .empfehlung-date { text-align: right; font-size: 13px; }
-        h1 { font-size: 22px; text-align: center; margin: 20px 0; }
-        p { margin: 0 0 12px; }
-        ul { margin: 12px 0; padding-left: 24px; }
-        li { margin-bottom: 4px; }
-        .signature { margin-top: 40px; }
-        .muted { color: #6b7280; font-size: 12px; }
-      </style>
-    `;
+    const styles = '<link rel="stylesheet" href="' + new URL('styles.css', window.location.href).href + '" />';
 
-    const win = window.open('', '_blank', 'width=820,height=900');
+    const win = window.open('', '_blank', 'width=900,height=1100');
     if (!win) {
       alert('Bitte erlauben Sie Popups für diese Seite, damit das Empfehlungsschreiben angezeigt werden kann.');
       return;
     }
     win.document.open();
     win.document.write(
-      '<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>FASQ-Empfehlung</title>' +
+      '<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>FASQ Einschätzung</title>' +
       styles +
-      '</head><body>' + html + '</body></html>'
+      '</head><body class="letter-page">' + html + '</body></html>'
     );
     win.document.close();
     win.focus();
-    // kurze Verzögerung, damit Inhalte gerendert sind
+    // Warten bis Bild + Stylesheet geladen
     setTimeout(function () {
       try { win.print(); } catch (e) { /* noop */ }
-    }, 300);
+    }, 600);
   }
 
   // --- Bootstrap ---

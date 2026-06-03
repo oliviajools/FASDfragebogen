@@ -158,23 +158,47 @@ html, body {
 .actions-hint { margin: 0; font-size: 12px; color: var(--color-muted); line-height: 1.5; }
 .actions-hint strong { color: var(--color-text); }
 
-.empfehlung-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; }
+.empfehlung-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px 14px;
+  margin-bottom: 14px;
+}
 
-.empfehlung-form input[type="text"] {
-  flex: 1 1 280px;
+.empfehlung-form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.empfehlung-form-grid input[type="text"],
+.empfehlung-form-grid input[type="date"],
+.empfehlung-form-grid select {
   padding: 10px 12px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   font-family: inherit;
   font-size: 14px;
   background: white;
+  color: var(--color-text);
 }
 
-.empfehlung-form input[type="text"]:focus {
+.empfehlung-form-grid input:focus,
+.empfehlung-form-grid select:focus {
   outline: none;
   border-color: var(--color-accent);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
+
+.btn-large { padding: 14px 22px; font-size: 15px; }
 
 .muted { color: var(--color-muted); font-size: 13px; margin: 0 0 12px; }
 
@@ -191,4 +215,110 @@ html, body {
   .no-print { display: none !important; }
   .card, .hero, .result-card { box-shadow: none; border-color: #cccccc; break-inside: avoid; }
   @page { size: portrait; margin: 1.5cm; }
+}
+
+/* =========================================
+   EMPFEHLUNGSSCHREIBEN (Druck-Layout, 1:1)
+   ========================================= */
+.letter-page {
+  background: white;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: #000;
+  margin: 0;
+  padding: 0;
+}
+
+.letter {
+  max-width: 18cm;
+  margin: 1.5cm auto;
+  padding: 0 1cm;
+  font-size: 11pt;
+  line-height: 1.45;
+  color: #000;
+}
+
+.letter-letterhead {
+  text-align: center;
+  margin-bottom: 2cm;
+}
+
+.letter-logo {
+  max-width: 180px;
+  height: auto;
+  display: inline-block;
+}
+
+.letter-address-line {
+  margin-top: 4px;
+  font-size: 10pt;
+  color: #000;
+}
+
+.letter-recipient {
+  margin: 0 0 1.2cm;
+  font-size: 10pt;
+  line-height: 1.4;
+}
+
+.letter-date {
+  text-align: right;
+  margin: 0 0 0.8cm;
+  font-size: 10pt;
+}
+
+.letter-title {
+  font-size: 16pt;
+  font-weight: 700;
+  margin: 0 0 0.6cm;
+  color: #000;
+  text-align: left;
+}
+
+.letter-salutation {
+  margin: 0 0 0.5cm;
+}
+
+.letter p {
+  margin: 0 0 0.4cm;
+  text-align: justify;
+}
+
+.letter-score {
+  text-align: center;
+  margin: 0.5cm 0 !important;
+}
+
+.letter-recommendation {
+  font-weight: 700;
+}
+
+.letter-greeting {
+  margin-top: 0.6cm !important;
+  font-weight: 700;
+}
+
+.letter-signature {
+  margin-top: 1.2cm;
+}
+
+.letter-signature p {
+  margin: 0 0 4px;
+  text-align: left !important;
+}
+
+.letter-signature-name { font-weight: 700; }
+.letter-signature-role { font-style: italic; }
+.letter-signature-contact a {
+  color: #1d4ed8;
+  text-decoration: none;
+}
+
+@media print {
+  .letter-page { background: white; }
+  .letter {
+    margin: 0 auto;
+    padding: 0;
+    max-width: 100%;
+  }
+  @page { size: A4 portrait; margin: 2cm 2.5cm; }
 }
