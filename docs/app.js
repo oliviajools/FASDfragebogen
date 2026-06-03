@@ -170,6 +170,18 @@
       printPage.addEventListener('click', function () { window.print(); });
     }
 
+    // Print-Answers Link (LimeSurvey-eigene Übersichtsseite)
+    const printAnswers = document.getElementById('btn-print-answers');
+    if (printAnswers) {
+      const printUrl = getParam('printurl');
+      if (printUrl && /^https?:\/\//.test(printUrl)) {
+        printAnswers.href = printUrl;
+        printAnswers.style.display = '';
+      } else {
+        printAnswers.style.display = 'none';
+      }
+    }
+
     // Empfehlungsschreiben immer ermöglichen (Text passt sich an Ergebnis an)
     if (empfehlungSection) {
       empfehlungSection.style.display = '';
