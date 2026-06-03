@@ -273,9 +273,11 @@
     }).join('');
 
     const today = formatDateDE(new Date());
+    const logoUrl = new URL('assets/FASD_Logo-scaled.png', window.location.href).href;
     const header = (
       '<header class="report-head">' +
       '<div class="head-left">' +
+      '<img class="report-logo" src="' + escapeHtml(logoUrl) + '" alt="FASD-Fachzentrum Hamburg e.V." />' +
       '<h1>FASQ-Antwortübersicht</h1>' +
       '<p class="report-meta">' +
       (data.fullName ? '<strong>Name:</strong> ' + escapeHtml(data.fullName) + ' &middot; ' : '') +
@@ -307,6 +309,7 @@
       'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#132235;margin:0;padding:20px 28px;line-height:1.45;background:#f5f7fa;}' +
       '.report{max-width:920px;margin:0 auto;background:white;padding:30px 36px;box-shadow:0 2px 8px rgba(0,0,0,0.08);border-radius:6px;}' +
       '.report-head{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;border-bottom:2px solid #132235;padding-bottom:14px;margin-bottom:24px;}' +
+      '.report-logo{max-width:160px;height:auto;display:block;margin-bottom:10px;}' +
       '.report-head h1{margin:0 0 6px;font-size:22px;}' +
       '.report-meta{margin:4px 0;font-size:13px;color:#374151;}' +
       '.score-box{background:#132235;color:white;border-radius:6px;padding:14px 20px;text-align:center;min-width:140px;}' +
