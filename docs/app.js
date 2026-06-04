@@ -66,7 +66,10 @@
       `Größe/Gewicht: ${data.height || '-'} cm / ${data.weight || '-'} kg`,
       '',
       `Erreichte Punktzahl: ${data.score}`,
-      `Bewertung: ${recommendation}`
+      `Bewertung: ${recommendation}`,
+      '',
+      '── Alle Fragen & Antworten ──',
+      window.location.href
     ].join('\r\n');
   }
 
