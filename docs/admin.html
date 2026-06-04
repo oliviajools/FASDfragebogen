@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>FASQ.online &ndash; Counter Admin</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .admin-page { max-width: 720px; margin: 0 auto; padding: 32px 18px 60px; }
+
+    .admin-hero {
+      background: var(--color-card-bg);
+      border-radius: var(--radius);
+      padding: 26px 30px;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--color-border);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 22px;
+    }
+    .admin-hero::before {
+      content: "";
+      position: absolute; top: 0; left: 0; right: 0; height: 4px;
+      background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary) 60%, var(--color-accent) 60%, var(--color-accent) 100%);
+    }
+    .admin-hero h1 { margin: 0 0 4px; font-size: 24px; color: var(--color-primary); font-weight: 700; }
+    .admin-hero p { margin: 0; font-size: 14px; color: var(--color-muted); }
+
+    .admin-card {
+      background: var(--color-card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--color-border);
+      padding: 22px 26px;
+      margin-bottom: 18px;
+    }
+
+    .admin-card h2 {
+      margin: 0 0 14px;
+      font-size: 16px;
+      color: var(--color-primary);
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--color-accent);
+      display: inline-block;
+    }
+
+    .admin-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px 18px;
+    }
+    @media (max-width: 540px) { .admin-form { grid-template-columns: 1fr; } }
+
+    .admin-form label {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .admin-form .field-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--color-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .admin-form input {
+      padding: 12px 14px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 18px;
+      font-weight: 600;
+      background: white;
+      color: var(--color-text);
+      font-variant-numeric: tabular-nums;
+    }
+    .admin-form input[type="date"] { font-size: 15px; font-weight: 500; }
+    .admin-form input:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(31, 60, 110, 0.15);
+    }
+
+    .quote-info {
+      grid-column: 1 / -1;
+      background: var(--color-sky-light);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--color-text);
+    }
+    .quote-info strong { color: var(--color-primary); }
+
+    .admin-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    .status {
+      margin-top: 14px;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      display: none;
+    }
+    .status.success { background: #e6f4ea; color: #1e6b32; border: 1px solid #b6dfc4; display: block; }
+    .status.error { background: #fce8e8; color: #b1272a; border: 1px solid #f1b9bb; display: block; }
+    .status.info { background: var(--color-sky-light); color: var(--color-primary); border: 1px solid var(--color-border); display: block; }
+
+    .token-section {
+      background: #fff8e1;
+      border: 1px solid #ffe082;
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      margin-bottom: 14px;
+      font-size: 13px;
+    }
+    .token-section.ok { background: #e6f4ea; border-color: #b6dfc4; }
+    .token-section h3 { margin: 0 0 6px; font-size: 14px; }
+    .token-section p { margin: 0 0 8px; line-height: 1.5; }
+    .token-section input[type="password"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 13px;
+    }
+    .token-section .small-actions {
+      display: flex; gap: 8px; margin-top: 8px;
+    }
+    .btn-small {
+      padding: 7px 12px;
+      font-size: 12px;
+      min-height: 32px;
+    }
+
+    .help-toggle {
+      background: none;
+      border: 0;
+      color: var(--color-primary);
+      cursor: pointer;
+      font-size: 13px;
+      text-decoration: underline;
+      padding: 0;
+      font-family: inherit;
+    }
+    .help-content {
+      margin-top: 10px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .help-content ol { padding-left: 18px; margin: 8px 0; }
+    .help-content code {
+      background: #f0f3f8;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+
+    .preview-box {
+      background: #1a1f2e;
+      color: #d3e0f0;
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      overflow-x: auto;
+      white-space: pre;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+  <main class="page admin-page">
+    <header class="admin-hero">
+      <h1>Counter-Admin</h1>
+      <p>Live-Zahlen für die Counter-Seite aktualisieren. Änderungen sind in 1-2 Minuten online.</p>
+    </header>
+
+    <section class="admin-card">
+      <div id="token-section" class="token-section">
+        <h3 id="token-status">GitHub-Verbindung einrichten</h3>
+        <p id="token-help-text">
+          Damit Sie mit einem Klick speichern können, brauchen Sie einmalig ein
+          GitHub Personal Access Token.
+          <button type="button" class="help-toggle" id="btn-show-help">Anleitung anzeigen</button>
+        </p>
+
+        <div id="help-content" class="help-content" hidden>
+          <ol>
+            <li>Bei GitHub einloggen: <a href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener">github.com/settings/tokens</a></li>
+            <li>„Generate new token" → „Fine-grained token"</li>
+            <li><strong>Token name</strong>: z.B. "FASQ Counter Admin"</li>
+            <li><strong>Expiration</strong>: 1 Jahr (oder länger)</li>
+            <li><strong>Repository access</strong>: „Only select repositories" → <code>oliviajools/FASDfragebogen</code></li>
+            <li><strong>Permissions → Repository permissions</strong>: <code>Contents</code> auf <code>Read and write</code></li>
+            <li>„Generate token" → Token kopieren (beginnt mit <code>github_pat_</code>)</li>
+            <li>Hier unten einfügen → „Speichern"</li>
+          </ol>
+          <p>Das Token wird nur lokal in Ihrem Browser gespeichert (LocalStorage) und niemals an Dritte gesendet – nur direkt an GitHub.</p>
+        </div>
+
+        <div id="token-input-row" style="margin-top: 12px;">
+          <input type="password" id="token-input" placeholder="github_pat_..." autocomplete="off" />
+          <div class="small-actions">
+            <button type="button" class="btn btn-primary btn-small" id="btn-save-token">Token speichern</button>
+            <button type="button" class="btn btn-small" id="btn-clear-token" style="background:#eee;color:#333;display:none;">Token löschen</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-card">
+      <h2>Werte aktualisieren</h2>
+
+      <form id="admin-form" class="admin-form">
+        <label>
+          <span class="field-label">Empfehlungen zur Diagnostik</span>
+          <input type="number" id="input-recommendations" min="0" step="1" required />
+        </label>
+        <label>
+          <span class="field-label">Durchgeführte Erhebungen</span>
+          <input type="number" id="input-assessments" min="0" step="1" required />
+        </label>
+        <label>
+          <span class="field-label">Erfassung seit</span>
+          <input type="date" id="input-since" required />
+        </label>
+        <label>
+          <span class="field-label">Letzte Aktualisierung</span>
+          <input type="date" id="input-updated" required />
+        </label>
+
+        <div class="quote-info" id="quote-info">
+          <strong>Empfehlungsquote:</strong> <span id="quote-display">—</span>
+        </div>
+      </form>
+
+      <div class="admin-actions">
+        <button type="button" class="btn btn-primary" id="btn-save">In GitHub speichern</button>
+        <button type="button" class="btn btn-accent" id="btn-download">Als Datei herunterladen</button>
+        <button type="button" class="btn" id="btn-reload" style="background:#eee;color:#333;">Werte neu laden</button>
+      </div>
+
+      <div class="status" id="status"></div>
+
+      <details style="margin-top: 16px;">
+        <summary style="cursor:pointer;font-size:13px;color:var(--color-muted);">JSON-Vorschau anzeigen</summary>
+        <div class="preview-box" id="json-preview"></div>
+      </details>
+    </section>
+
+    <footer class="footer">
+      <p><a href="counter.html" style="color:var(--color-primary);">→ Zur öffentlichen Counter-Seite</a></p>
+      <p style="margin-top:6px;">&copy; <span id="current-year"></span> FASD-Fachzentrum Hamburg e.V.</p>
+    </footer>
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+</html>
