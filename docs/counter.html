@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FASQ.online &ndash; Wirkung in Zahlen</title>
+  <meta name="description" content="Wie viele Empfehlungen zur FASD-Diagnostik der FASQ-Fragebogen bisher angestoßen hat." />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .counter-page { max-width: 960px; margin: 0 auto; padding: 32px 18px 60px; }
+
+    .counter-hero {
+      background: var(--color-card-bg);
+      border-radius: var(--radius);
+      padding: 36px 36px 32px;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--color-border);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 22px;
+    }
+    .counter-hero::before {
+      content: "";
+      position: absolute; top: 0; left: 0; right: 0; height: 4px;
+      background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary) 60%, var(--color-accent) 60%, var(--color-accent) 100%);
+    }
+    .counter-hero-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 24px; flex-wrap: wrap;
+    }
+    .counter-hero h1 {
+      margin: 0 0 6px; font-size: 30px; line-height: 1.15; color: var(--color-primary);
+      font-weight: 700; letter-spacing: -0.01em;
+    }
+    .counter-hero .subtitle { margin: 0; font-size: 15px; color: var(--color-muted); max-width: 540px; }
+    .counter-hero img { max-width: 180px; height: auto; }
+
+    .counter-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+    @media (max-width: 720px) { .counter-grid { grid-template-columns: 1fr; } }
+
+    .counter-card {
+      background: var(--color-card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--color-border);
+      padding: 32px 30px;
+      text-align: center;
+      position: relative;
+    }
+    .counter-card.highlight {
+      background: linear-gradient(135deg, var(--color-primary) 0%, #2a4f8a 100%);
+      color: white;
+      border: 0;
+    }
+    .counter-label {
+      font-size: 13px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .counter-card.highlight .counter-label { color: rgba(255,255,255,0.85); }
+
+    .counter-number {
+      font-size: 88px;
+      line-height: 1;
+      font-weight: 800;
+      color: var(--color-primary);
+      margin: 6px 0;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+    }
+    .counter-card.highlight .counter-number {
+      color: var(--color-accent);
+      text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .counter-sub {
+      font-size: 14px;
+      color: var(--color-muted);
+      margin: 6px 0 0;
+      line-height: 1.5;
+    }
+    .counter-card.highlight .counter-sub { color: rgba(255,255,255,0.85); }
+
+    .counter-meta {
+      background: var(--color-card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--color-border);
+      padding: 18px 22px;
+      font-size: 13px;
+      color: var(--color-muted);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .counter-meta strong { color: var(--color-text); }
+
+    .counter-explanation {
+      background: var(--color-card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--color-border);
+      padding: 22px 26px;
+      margin-bottom: 18px;
+    }
+    .counter-explanation p { margin: 0 0 10px; font-size: 14px; line-height: 1.6; }
+    .counter-explanation p:last-child { margin: 0; }
+
+    .counter-cta {
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .pulse-dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--color-accent);
+      margin-right: 8px;
+      vertical-align: middle;
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.4); }
+    }
+  </style>
+</head>
+<body>
+  <main class="page counter-page">
+    <header class="counter-hero">
+      <div class="counter-hero-inner">
+        <div>
+          <h1>FASQ.online &ndash; Wirkung in Zahlen</h1>
+          <p class="subtitle">
+            <span class="pulse-dot" aria-hidden="true"></span>
+            Live-Ticker zu den durch unseren Fragebogen angestoßenen FASD-Diagnostik-Empfehlungen.
+          </p>
+        </div>
+        <img src="assets/FASD_Logo-scaled.png" alt="FASD-Fachzentrum Hamburg e.V." />
+      </div>
+    </header>
+
+    <section class="counter-grid">
+      <div class="counter-card highlight">
+        <div class="counter-label">Empfehlungen zur Diagnostik</div>
+        <div class="counter-number" id="num-recommendations" data-target="0">0</div>
+        <p class="counter-sub" id="recommendations-sub">Fragebögen mit dringender Empfehlung zur fachärztlichen FASD-Abklärung</p>
+      </div>
+      <div class="counter-card">
+        <div class="counter-label">Durchgeführte Erhebungen</div>
+        <div class="counter-number" id="num-assessments" data-target="0">0</div>
+        <p class="counter-sub">Insgesamt ausgefüllte FASQ-Fragebögen</p>
+      </div>
+    </section>
+
+    <section class="counter-meta">
+      <span><strong>Seit:</strong> <span id="meta-since">&mdash;</span></span>
+      <span><strong>Letzte Aktualisierung:</strong> <span id="meta-updated">&mdash;</span></span>
+      <span><strong>Empfehlungsquote:</strong> <span id="meta-rate">&mdash;</span></span>
+    </section>
+
+    <section class="counter-explanation">
+      <p><strong>Was bedeutet das?</strong> Der FASQ (Fetal Alcohol Symptoms Questionnaire) wurde von Dr. Reinhold Feldmann/Klinik Walstedde entwickelt. Liegt der erreichte Score über dem altersabhängigen Schwellenwert, empfehlen wir eine fachärztliche Abklärung auf FASD (Fetales Alkoholsyndrom).</p>
+      <p>Jede Empfehlung steht für eine Familie, die einen weiteren Schritt in Richtung Diagnose, Verständnis und passender Unterstützung gemacht hat.</p>
+    </section>
+
+    <div class="counter-cta">
+      <a class="btn btn-primary" href="https://fasd-fz-hh.limesurvey.net/index.php/881996" target="_blank" rel="noopener">Fragebogen ausfüllen</a>
+    </div>
+
+    <footer class="footer">
+      <img class="footer-logo" src="assets/FASD_Logo-scaled.png" alt="FASD-Fachzentrum Hamburg e.V." />
+      <p>&copy; <span id="current-year"></span> FASD-Fachzentrum Hamburg e.V.<br />Rothenbaumchaussee 114 &middot; 20149 Hamburg</p>
+    </footer>
+  </main>
+
+  <script src="counter.js"></script>
+</body>
+</html>

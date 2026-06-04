@@ -1,0 +1,7 @@
+{
+  "totalRecommendations": 0,
+  "totalAssessments": 0,
+  "since": "2026-06-01",
+  "lastUpdated": "2026-06-04",
+  "comment": "totalRecommendations = Anzahl Fragebögen mit positivem Befund (Empfehlung zur fachärztlichen Abklärung). totalAssessments = Anzahl insgesamt durchgeführter Erhebungen. Bitte monatlich aus LimeSurvey aktualisieren."
+}
