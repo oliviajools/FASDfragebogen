@@ -24,7 +24,7 @@
     <section class="card" aria-labelledby="person-heading">
       <h2 id="person-heading" class="card-title">Angaben zur Person</h2>
       <dl class="person-grid">
-        <div><dt>Name</dt><dd id="data-name">&mdash;</dd></div>
+        <div><dt>Name</dt><dd><input type="text" id="data-name" placeholder="Name eintragen (optional)" /></dd></div>
         <div><dt>Alter</dt><dd id="data-age">&mdash;</dd></div>
         <div><dt>E-Mail</dt><dd id="data-email">&mdash;</dd></div>
         <div><dt>PLZ</dt><dd id="data-plz">&mdash;</dd></div>
@@ -45,8 +45,9 @@
     </section>
 
     <section class="card thanks-section">
-      <p><strong>Mit besten Grüßen Ihr FASD-Fachzentrum Hamburg e.V.</strong></p>
-      <p>Eine Danksagung an Dr. R. Feldmann / Tagesklinik Walstedde und vielen Dank für die finanzielle Förderung durch die Stadt Hamburg.</p>
+      <p><strong>Mit besten Grüßen, Ihr TEAM des FASD-Fachzentrum Hamburg e.V.</strong></p>
+      <p id="thanks-closing">Für weitere Fragen zum Themenkomplex von FASD stehen wir in Form einer kostenlosen Erstberatung gerne zur Verfügung!</p>
+      <p>Unsere Danksagung an Dr. R. Feldmann / Tagesklinik Walstedde und vielen Dank für die finanzielle Projektförderung der Stadt Hamburg/Sozialbehörde.</p>
       <img class="funding-logo" src="https://fasd-fz-hh.limesurvey.net/upload/surveys/881996/images/logo-hamburg-fhh-sozialbehoerde-576x208%20(002).png" alt="Sozialbehörde Hamburg" onerror="this.style.display='none'" />
     </section>
 
@@ -61,7 +62,7 @@
       <div class="actions-grid">
         <button class="btn btn-primary" id="btn-print-page">Seite als PDF speichern</button>
         <a class="btn btn-primary" id="btn-mail-self" href="#">Ergebnis an mich senden</a>
-        <a class="btn btn-primary" id="btn-mail-center" href="#">Ergebnis ans Fachzentrum senden</a>
+        <a class="btn btn-primary" id="btn-mail-center" href="#">Ergebnis FASD-Fachzentrum zusenden</a>
         <button class="btn btn-primary" id="btn-show-answers" type="button">Alle Fragen &amp; Antworten anzeigen</button>
       </div>
       <p class="actions-hint">
@@ -119,25 +120,25 @@
 
       <div class="letter-date" data-field="date"></div>
 
-      <h1 class="letter-title">FASQ Einschätzung</h1>
+      <h1 class="letter-title" data-field="letterTitle">Dringende Empfehlung einer fachärztlichen Abklärung auf FASD (Fetale Alkoholspektrumstörung)</h1>
 
       <p class="letter-salutation" data-field="salutation"></p>
 
-      <p>im folgenden erhalten Sie unsere Empfehlung in Bezug auf die Erhebung durch den <strong>FASQ</strong>, den Sie uns am <span data-field="assessmentDate"></span> vorgelegt haben und auf Ihre/n <span data-field="relation"></span> beziehen.</p>
+      <p>im folgenden erhalten Sie unsere Empfehlung in Bezug auf die Erhebung durch den <strong>FASQ.online</strong>, den Sie uns am <span data-field="assessmentDate"></span> vorgelegt haben und auf Ihre/n <span data-field="relation"></span> beziehen.</p>
 
-      <p>Der Fragenkatalog <strong>FASQ</strong> (Fetal Alcohol Symptoms Questionnaire) wurde von Dr. rer. medic Reinhold Feldmann/Klinik Walstedde entwickelt. Es handelt sich hierbei um differentialdiagnostische Fragestellungen zur Unterstützung (z.B. im Diagnoseverfahren). Gerade bei jenen Probanden, bei denen sich die typischen Merkmale nicht finden lassen oder bislang nicht diagnostiziert werden konnten dient der FASQ als Ersteinschätzungsbogen zu FASD und soll von verwechselbaren Störungen (insbesondere ADHS, Autismus oder Deprivation) unterscheiden. Des Weiteren kann mit Hilfe des FASQ abgewogen werden, ob eine fachärztliche Konsultation für eine FASD-Diagnostik/Abklärung empfohlen wird.</p>
+      <p>Der Fragenkatalog <strong>FASQ</strong> (Fetal Alcohol Symptoms Questionnaire) wurde von Dr. rer. medic Reinhold Feldmann/Klinik Walstedde entwickelt. Es handelt sich hierbei um differentialdiagnostische Fragestellungen zur Unterstützung (z.B. vor dem Diagnoseverfahren). Gerade bei jenen Personen, bei denen sich die typischen Merkmale nicht finden lassen oder bislang nicht diagnostiziert werden konnten dient der FASQ als Ersteinschätzungsbogen zu FASD (Fetale Alkoholspektrumstörung) und soll von verwechselbaren Störungen (insbesondere ADHS, Autismus und weiteren Deprivation) unterscheiden. Des Weiteren kann mit Hilfe des <strong>FASQ.online</strong> abgewogen werden, ob eine fachärztliche Konsultation für eine FASD-Diagnostik/Abklärung empfohlen wird.</p>
 
-      <p class="letter-score">Es wurde ein <strong>FASQ-Score von <span data-field="score"></span></strong> ermittelt</p>
+      <p class="letter-score">Bei der Erhebung wurde ein <strong>FASQ-Score von <span data-field="score"></span></strong> ermittelt</p>
 
       <p class="letter-recommendation" data-field="recommendationParagraph"></p>
 
       <p class="letter-greeting">Mit besten Grüßen</p>
 
       <div class="letter-signature">
-        <p class="letter-signature-name">Timm F. Theen</p>
-        <p class="letter-signature-role">-Projektleitung-</p>
-        <p class="letter-signature-contact"><a href="mailto:t.theen@fasd-fachzentrum.hamburg">t.theen@fasd-fachzentrum.hamburg</a></p>
-        <p class="letter-signature-contact">Nach Absprache: <a href="tel:+4915165117742">0151 65117742</a></p>
+        <p class="letter-signature-contact">Ihr Team vom</p>
+        <p class="letter-signature-contact">FASD-Fachzentrum Hamburg e.V.</p>
+        <p class="letter-signature-contact">Rothenbaumchaussee 114 · 20149 Hamburg</p>
+        <p class="letter-signature-contact"><a href="mailto:info@fasd-fachzentrum.hamburg">info@fasd-fachzentrum.hamburg</a></p>
       </div>
     </div>
   </template>

@@ -1,24 +1,21 @@
 (function () {
   'use strict';
 
-  const REPO_OWNER = 'oliviajools';
-  const REPO_NAME = 'FASDfragebogen';
-  const FILE_PATH = 'docs/counter.json';
-  const BRANCH = 'main';
-  const TOKEN_KEY = 'fasq_admin_token';
+  const PASSWORD_KEY = 'fasq_admin_password';
+  const API_URL = 'update_counter.php';
 
-  // --- Token-Verwaltung ---
-  function getToken() {
-    return localStorage.getItem(TOKEN_KEY) || '';
+  // --- Passwort-Verwaltung ---
+  function getPassword() {
+    return localStorage.getItem(PASSWORD_KEY) || '';
   }
-  function setToken(token) {
-    if (token) localStorage.setItem(TOKEN_KEY, token);
-    else localStorage.removeItem(TOKEN_KEY);
-    updateTokenSection();
+  function setPassword(password) {
+    if (password) localStorage.setItem(PASSWORD_KEY, password);
+    else localStorage.removeItem(PASSWORD_KEY);
+    updatePasswordSection();
   }
 
-  function updateTokenSection() {
-    const token = getToken();
+  function updatePasswordSection() {
+    const password = getPassword();
     const section = document.getElementById('token-section');
     const status = document.getElementById('token-status');
     const helpText = document.getElementById('token-help-text');
@@ -26,18 +23,17 @@
     const input = document.getElementById('token-input');
     const clearBtn = document.getElementById('btn-clear-token');
 
-    if (token) {
+    if (password) {
       section.classList.add('ok');
-      status.textContent = '✓ GitHub-Verbindung aktiv';
-      helpText.textContent = 'Token ist gespeichert. Sie können nun direkt nach GitHub speichern.';
+      status.textContent = '✓ Passwort gespeichert';
+      helpText.textContent = 'Passwort ist gespeichert. Sie können nun die Werte aktualisieren.';
       input.value = '';
-      input.placeholder = 'Neues Token einfügen, um zu ersetzen';
+      input.placeholder = 'Neues Passwort einfügen, um zu ersetzen';
       clearBtn.style.display = '';
     } else {
       section.classList.remove('ok');
-      status.textContent = 'GitHub-Verbindung einrichten';
-      helpText.innerHTML = 'Damit Sie mit einem Klick speichern können, brauchen Sie einmalig ein GitHub Personal Access Token. <button type="button" class="help-toggle" id="btn-show-help">Anleitung anzeigen</button>';
-      bindHelpToggle();
+      status.textContent = 'Passwort eingeben';
+      helpText.textContent = 'Geben Sie das Admin-Passwort ein, um die Counter-Werte zu aktualisieren.';
       clearBtn.style.display = 'none';
     }
   }
@@ -118,75 +114,37 @@
       });
   }
 
-  // --- GitHub API: aktuelle Datei holen (für SHA) ---
-  function githubGetFile(token) {
-    const url = 'https://api.github.com/repos/' + REPO_OWNER + '/' + REPO_NAME +
-      '/contents/' + FILE_PATH + '?ref=' + BRANCH;
-    return fetch(url, {
-      headers: {
-        'Authorization': 'token ' + token,
-        'Accept': 'application/vnd.github+json'
-      }
-    }).then(function (r) {
-      if (!r.ok) throw new Error('GitHub: ' + r.status + ' ' + r.statusText);
-      return r.json();
-    });
-  }
-
-  // --- GitHub API: Datei aktualisieren ---
-  function githubUpdateFile(token, sha, content, message) {
-    const url = 'https://api.github.com/repos/' + REPO_OWNER + '/' + REPO_NAME +
-      '/contents/' + FILE_PATH;
-    // Base64 mit korrekter UTF-8-Kodierung
-    const utf8Bytes = new TextEncoder().encode(content);
-    let binary = '';
-    utf8Bytes.forEach(function (b) { binary += String.fromCharCode(b); });
-    const base64 = btoa(binary);
-
-    return fetch(url, {
-      method: 'PUT',
-      headers: {
-        'Authorization': 'token ' + token,
-        'Accept': 'application/vnd.github+json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        message: message,
-        content: base64,
-        sha: sha,
-        branch: BRANCH
-      })
-    }).then(function (r) {
-      if (!r.ok) {
-        return r.json().then(function (e) {
-          throw new Error('GitHub: ' + (e.message || r.statusText));
-        });
-      }
-      return r.json();
-    });
-  }
-
-  // --- Speichern in GitHub ---
-  function saveToGitHub() {
-    const token = getToken();
-    if (!token) {
-      showStatus('Bitte zuerst GitHub-Token einrichten.', 'error');
+  // --- Speichern auf Server ---
+  function saveToServer() {
+    const password = getPassword();
+    if (!password) {
+      showStatus('Bitte zuerst Passwort eingeben.', 'error');
       return;
     }
     const payload = buildJsonPayload();
     const content = JSON.stringify(payload, null, 2) + '\n';
-    const message = 'Counter Update: ' + payload.totalRecommendations +
-      ' Empfehlungen / ' + payload.totalAssessments + ' Erhebungen (' + payload.lastUpdated + ')';
 
-    showStatus('Speichere in GitHub…', 'info');
+    showStatus('Speichere auf Server…', 'info');
     document.getElementById('btn-save').disabled = true;
 
-    githubGetFile(token)
-      .then(function (file) {
-        return githubUpdateFile(token, file.sha, content, message);
+    const formData = new FormData();
+    formData.append('password', password);
+    formData.append('data', content);
+
+    fetch(API_URL, {
+      method: 'POST',
+      body: formData
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
       })
-      .then(function () {
-        showStatus('✓ Erfolgreich gespeichert. Die Counter-Seite ist in 1-2 Minuten aktualisiert.', 'success');
+      .then(function (response) {
+        if (response.success) {
+          showStatus('✓ Erfolgreich gespeichert. Die Counter-Seite ist sofort aktualisiert.', 'success');
+        } else {
+          showStatus('Fehler beim Speichern: ' + (response.error || 'Unbekannter Fehler'), 'error');
+        }
       })
       .catch(function (err) {
         showStatus('Fehler beim Speichern: ' + err.message, 'error');
@@ -216,24 +174,24 @@
   function init() {
     document.getElementById('current-year').textContent = String(new Date().getFullYear());
 
-    updateTokenSection();
+    updatePasswordSection();
     bindHelpToggle();
     loadCurrentValues();
 
     document.getElementById('btn-save-token').addEventListener('click', function () {
       const val = document.getElementById('token-input').value.trim();
       if (!val) {
-        showStatus('Bitte ein Token einfügen.', 'error');
+        showStatus('Bitte ein Passwort eingeben.', 'error');
         return;
       }
-      setToken(val);
-      showStatus('Token gespeichert.', 'success');
+      setPassword(val);
+      showStatus('Passwort gespeichert.', 'success');
     });
 
     document.getElementById('btn-clear-token').addEventListener('click', function () {
-      if (confirm('Token wirklich löschen?')) {
-        setToken('');
-        showStatus('Token entfernt.', 'info');
+      if (confirm('Passwort wirklich löschen?')) {
+        setPassword('');
+        showStatus('Passwort entfernt.', 'info');
       }
     });
 
@@ -241,7 +199,7 @@
       document.getElementById(id).addEventListener('input', updatePreview);
     });
 
-    document.getElementById('btn-save').addEventListener('click', saveToGitHub);
+    document.getElementById('btn-save').addEventListener('click', saveToServer);
     document.getElementById('btn-download').addEventListener('click', downloadJson);
     document.getElementById('btn-reload').addEventListener('click', loadCurrentValues);
   }

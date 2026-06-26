@@ -21,10 +21,10 @@
   // --- Konfiguration ---
   const FACHZENTRUM_EMAIL = 't.theen@fasd-fachzentrum.hamburg';
 
-  const RECOMMENDATION_POSITIVE = 'Empfehlung einer FASD-Diagnostik';
-  const RECOMMENDATION_NEGATIVE = 'Keine Empfehlung einer FASD-Diagnostik';
-  const DESC_POSITIVE = 'Es bestehen Hinweise, die eine umfängliche fachärztliche Abklärung auf FASD sinnvoll machen.';
-  const DESC_NEGATIVE = 'Auf Grundlage des erreichten Gesamtwerts wird aktuell keine FASD-Diagnostik empfohlen.';
+  const RECOMMENDATION_POSITIVE = 'Dringende Empfehlung einer FASD-Diagnostik';
+  const RECOMMENDATION_NEGATIVE = 'Keine direkte Empfehlung einer FASD-Diagnostik';
+  const DESC_POSITIVE = 'Es bestehen Hinweise, die eine umfängliche fachärztliche Abklärung auf FASD sinnvoll begründen.';
+  const DESC_NEGATIVE = 'Auf Grundlage des erreichten Gesamtwerts würden wir aktuell keine FASD-Diagnostik empfehlen. Letztendlich obliegt es Ihnen, hier eine Entscheidung zu treffen.';
 
   // --- Hilfsfunktionen ---
   function getParam(name, fallback) {
@@ -51,7 +51,12 @@
 
   function setText(id, value) {
     const el = document.getElementById(id);
-    if (el) el.textContent = value || '\u2014';
+    if (!el) return;
+    if (el.tagName === 'INPUT') {
+      el.value = value || '';
+    } else {
+      el.textContent = value || '\u2014';
+    }
   }
 
   function buildMailBody(data, recommendation) {
@@ -138,6 +143,13 @@
     }
     if (descEl) {
       descEl.textContent = positive ? DESC_POSITIVE : DESC_NEGATIVE;
+    }
+
+    const thanksClosing = document.getElementById('thanks-closing');
+    if (thanksClosing) {
+      thanksClosing.textContent = positive
+        ? 'Für weitere Fragen zum Themenkomplex von FASD stehen wir in Form einer kostenlosen Erstberatung gerne zur Verfügung!'
+        : 'Für weitere Fragen zum Themenkomplex von FASD stehen wir in Form einer kostenlosen Erstberatung gerne zur Verfügung unter info@fasd-fachzentrum.hamburg';
     }
 
     return positive;
@@ -386,9 +398,9 @@
   function buildRecommendationParagraph(score, age) {
     const positive = evaluateRecommendation(score, age);
     if (positive) {
-      return 'Mit einem Gesamtwert von ' + score + ' empfehlen wir bei Kindern ab sechs Jahren, Jugendlichen und Erwachsenen dringend die fachärztliche Abklärung auf FASD. Für weitere Fragen zum Themenkomplex von FASD stehen wir in Form einer kostenlosen Erstberatung gerne zur Verfügung und verbleiben';
+      return 'Mit einem Gesamtwert von ' + score + ' empfehlen wir bei Kindern ab sechs Jahren, Jugendlichen und Erwachsenen dringend die fachärztliche Abklärung auf FASD basierend auf der FASD S3-Leitlinie. Für weitere Fragen zum Themenkomplex von FASD stehen wir in Form einer kostenlosen Erstberatung gerne zur Verfügung und verbleiben';
     }
-    return 'Mit einem Gesamtwert von ' + score + ' liegt aktuell keine Empfehlung für eine fachärztliche FASD-Abklärung vor. Bei Rückfragen oder dem Wunsch nach einer Beratung stehen wir Ihnen in Form einer kostenlosen Erstberatung gerne zur Verfügung und verbleiben';
+    return 'Auf Grundlage des erreichten Gesamtwerts von ' + score + ' würden wir aktuell keine FASD-Diagnostik empfehlen. Letztendlich obliegt es Ihnen, hier eine Entscheidung zu treffen. Bei Rückfragen oder dem Wunsch nach einer Beratung stehen wir Ihnen in Form einer kostenlosen Erstberatung gerne zur Verfügung und verbleiben';
   }
 
   // --- Anrede zusammenbauen ---
@@ -418,12 +430,19 @@
     if (!template) return;
 
     const clone = template.content.cloneNode(true);
+    const positiveLetter = evaluateRecommendation(data.score, data.age);
     clone.querySelector('[data-field="date"]').textContent = formatDateDE(new Date());
     clone.querySelector('[data-field="salutation"]').textContent = buildSalutation(anrede, recipientName);
     clone.querySelector('[data-field="assessmentDate"]').textContent = assessmentDate;
     clone.querySelector('[data-field="relation"]').textContent = relation;
     clone.querySelector('[data-field="score"]').textContent = String(data.score);
     clone.querySelector('[data-field="recommendationParagraph"]').textContent = buildRecommendationParagraph(data.score, data.age);
+    const letterTitleEl = clone.querySelector('[data-field="letterTitle"]');
+    if (letterTitleEl) {
+      letterTitleEl.textContent = positiveLetter
+        ? 'Dringende Empfehlung einer fachärztlichen Abklärung auf FASD (Fetale Alkoholspektrumstörung)'
+        : 'FASQ Einschätzung';
+    }
 
     const wrapper = document.createElement('div');
     wrapper.appendChild(clone);
