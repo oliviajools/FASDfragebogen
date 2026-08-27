@@ -431,6 +431,15 @@
 
     const clone = template.content.cloneNode(true);
     const positiveLetter = evaluateRecommendation(data.score, data.age);
+    const recipientNameEl = clone.querySelector('[data-field="recipientName"]');
+    if (recipientNameEl) {
+      if (recipientName.trim()) {
+        recipientNameEl.textContent = recipientName.trim();
+      } else {
+        recipientNameEl.innerHTML = 'FASD-Fachzentrum Hamburg e.V., Rothenbaumchaussee 114,<br />20149 Hamburg<br />Zur Vorlage';
+      }
+    }
+
     clone.querySelector('[data-field="date"]').textContent = formatDateDE(new Date());
     clone.querySelector('[data-field="salutation"]').textContent = buildSalutation(anrede, recipientName);
     clone.querySelector('[data-field="assessmentDate"]').textContent = assessmentDate;

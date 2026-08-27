@@ -1,7 +1,7 @@
 {
-  "totalRecommendations": 245,
-  "totalAssessments": 377,
+  "totalRecommendations": 306,
+  "totalAssessments": 526,
   "since": "2026-06-01",
-  "lastUpdated": "2026-06-08",
+  "lastUpdated": "2026-08-27",
   "comment": "totalRecommendations = Fragebögen mit positivem Befund. totalAssessments = Gesamtanzahl Erhebungen. Aktualisierbar über admin.html."
 }
