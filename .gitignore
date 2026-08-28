@@ -3,3 +3,7 @@
 *.png
 .DS_Store
 !docs/assets/**/*.png
+
+# Geheime Server-Konfiguration (Passwort-Hash + GitHub-Token)
+server/counter-config.php
+docs/update_counter.php

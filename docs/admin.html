@@ -186,32 +186,16 @@
 
     <section class="admin-card">
       <div id="token-section" class="token-section">
-        <h3 id="token-status">GitHub-Verbindung einrichten</h3>
+        <h3 id="token-status">Passwort eingeben</h3>
         <p id="token-help-text">
-          Damit Sie mit einem Klick speichern können, brauchen Sie einmalig ein
-          GitHub Personal Access Token.
-          <button type="button" class="help-toggle" id="btn-show-help">Anleitung anzeigen</button>
+          Geben Sie das Admin-Passwort ein, um die Counter-Werte zu aktualisieren.
         </p>
 
-        <div id="help-content" class="help-content" hidden>
-          <ol>
-            <li>Bei GitHub einloggen: <a href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener">github.com/settings/tokens</a></li>
-            <li>„Generate new token" → „Fine-grained token"</li>
-            <li><strong>Token name</strong>: z.B. "FASQ Counter Admin"</li>
-            <li><strong>Expiration</strong>: 1 Jahr (oder länger)</li>
-            <li><strong>Repository access</strong>: „Only select repositories" → <code>oliviajools/FASDfragebogen</code></li>
-            <li><strong>Permissions → Repository permissions</strong>: <code>Contents</code> auf <code>Read and write</code></li>
-            <li>„Generate token" → Token kopieren (beginnt mit <code>github_pat_</code>)</li>
-            <li>Hier unten einfügen → „Speichern"</li>
-          </ol>
-          <p>Das Token wird nur lokal in Ihrem Browser gespeichert (LocalStorage) und niemals an Dritte gesendet – nur direkt an GitHub.</p>
-        </div>
-
         <div id="token-input-row" style="margin-top: 12px;">
-          <input type="password" id="token-input" placeholder="github_pat_..." autocomplete="off" />
+          <input type="password" id="token-input" placeholder="Admin-Passwort" autocomplete="off" />
           <div class="small-actions">
-            <button type="button" class="btn btn-primary btn-small" id="btn-save-token">Token speichern</button>
-            <button type="button" class="btn btn-small" id="btn-clear-token" style="background:#eee;color:#333;display:none;">Token löschen</button>
+            <button type="button" class="btn btn-primary btn-small" id="btn-save-token">Passwort speichern</button>
+            <button type="button" class="btn btn-small" id="btn-clear-token" style="background:#eee;color:#333;display:none;">Passwort löschen</button>
           </div>
         </div>
       </div>
@@ -244,7 +228,7 @@
       </form>
 
       <div class="admin-actions">
-        <button type="button" class="btn btn-primary" id="btn-save">In GitHub speichern</button>
+        <button type="button" class="btn btn-primary" id="btn-save">Speichern</button>
         <button type="button" class="btn btn-accent" id="btn-download">Als Datei herunterladen</button>
         <button type="button" class="btn" id="btn-reload" style="background:#eee;color:#333;">Werte neu laden</button>
       </div>
