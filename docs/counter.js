@@ -74,10 +74,17 @@
     console.error('[Counter]', message);
   }
 
-  // --- Daten laden (mit Cache-Buster, damit Updates sofort sichtbar) ---
+  // --- Daten laden: primär aus GitHub (zentrale Quelle), Fallback lokal ---
   function loadData() {
-    const url = 'counter.json?v=' + Date.now();
-    fetch(url, { cache: 'no-store' })
+    const remoteUrl = 'https://raw.githubusercontent.com/oliviajools/FASDfragebogen/main/docs/counter.json?v=' + Date.now();
+    fetch(remoteUrl, { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r;
+      })
+      .catch(function () {
+        return fetch('counter.json?v=' + Date.now(), { cache: 'no-store' });
+      })
       .then(function (r) {
         if (!r.ok) throw new Error('HTTP ' + r.status);
         return r.json();

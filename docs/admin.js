@@ -100,10 +100,19 @@
     }
   }
 
-  // --- counter.json laden ---
+  // --- counter.json laden (immer aktueller Stand aus GitHub, Fallback lokal) ---
   function loadCurrentValues() {
     showStatus('Aktuelle Werte werden geladen…', 'info');
-    fetch('counter.json?v=' + Date.now(), { cache: 'no-store' })
+    const remoteUrl = 'https://raw.githubusercontent.com/' + REPO_OWNER + '/' + REPO_NAME +
+      '/' + BRANCH + '/' + FILE_PATH + '?v=' + Date.now();
+    fetch(remoteUrl, { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r;
+      })
+      .catch(function () {
+        return fetch('counter.json?v=' + Date.now(), { cache: 'no-store' });
+      })
       .then(function (r) { return r.json(); })
       .then(function (data) {
         document.getElementById('input-recommendations').value = data.totalRecommendations || 0;
