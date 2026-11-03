@@ -1,8 +1,8 @@
 <?php
 // FASQ Counter – manuelles Speichern aus admin.html.
 // Prüft das Admin-Passwort und schreibt counter.json lokal und via GitHub-API ins Repo.
-// Hinweis: Ist der automatische Abgleich (sync_counter.php) aktiv, überschreibt
-// der nächste Lauf manuell eingetragene Werte wieder mit den LimeSurvey-Zahlen.
+// Läuft der automatische Abgleich bereits, werden die Startwerte so angepasst, dass
+// die eingetragenen Zahlen gelten und künftige Antworten weiter dazugezählt werden.
 
 declare(strict_types=1);
 require __DIR__ . '/counter-lib.php';
@@ -50,7 +50,7 @@ $payload = [
   'totalAssessments' => $total,
   'since' => $since,
   'lastUpdated' => $updated,
-  'source' => 'manual',
+  'source' => counterReadState() !== null ? 'limesurvey' : 'manual',
   'lastSync' => date('c'),
   'comment' => COUNTER_COMMENT,
 ];
@@ -62,5 +62,14 @@ try {
   counterRespond(502, ['success' => false, 'error' => $e->getMessage()]);
 }
 counterWriteLocal($content);
+
+$state = counterReadState();
+if ($state !== null) {
+  $state['baseline'] = [
+    'recommendations' => $recs - (int)($state['lastNew']['recommendations'] ?? 0),
+    'assessments' => $total - (int)($state['lastNew']['assessments'] ?? 0),
+  ];
+  counterWriteState($state);
+}
 
 counterRespond(200, ['success' => true]);

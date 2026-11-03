@@ -37,12 +37,15 @@ define('LIMESURVEY_URL', 'https://fasd-fz-hh.limesurvey.net/index.php/admin/remo
 define('LIMESURVEY_USER', 'counter-bot');
 define('LIMESURVEY_PASSWORD', 'HIER_PASSWORT_EINTRAGEN');
 
-// Alle Umfragen, deren abgeschlossene Antworten gezählt werden (z.B. deutsch + englisch).
-// Die ID steht in der Umfrage-URL: …limesurvey.net/655176 → 655176
-define('LIMESURVEY_SURVEY_IDS', [655176]);
+// Alle Umfragen, deren NEUE Antworten gezählt werden. Die ID ist die Zahl in der Umfrage-URL:
+//   https://fasd-fz-hh.limesurvey.net/299374 → 299374
+// Antworten, die beim ersten Lauf schon da sind, werden nie gezählt – auch wenn eine ID
+// später ergänzt wird. Eine Umfrage zu viel aufzunehmen schadet also nicht.
+define('LIMESURVEY_SURVEY_IDS', [299374, 655176]);
 
-// Optional: nur Antworten ab diesem Abgabedatum zählen (YYYY-MM-DD). Leer = alle.
-define('COUNTER_COUNT_FROM', '');
+// Startwerte = Stand bei Freischaltung. Gezählt wird ab dann: Startwert + neue Antworten.
+define('COUNTER_BASELINE_RECOMMENDATIONS', 380);
+define('COUNTER_BASELINE_ASSESSMENTS', 685);
 
 // Anzeige „Seit“ auf der Counter-Seite
 define('COUNTER_SINCE', '2025-12-30');

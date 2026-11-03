@@ -25,6 +25,25 @@ function counterReadLocal(): ?array {
   return is_array($data) ? $data : null;
 }
 
+// --- Zustand des automatischen Abgleichs (Startwerte + IDs der Antworten vor Freischaltung) ---
+function counterStatePath(): string {
+  return __DIR__ . '/.sync-state.json';
+}
+
+function counterReadState(): ?array {
+  $path = counterStatePath();
+  if (!is_readable($path)) return null;
+  $data = json_decode((string)file_get_contents($path), true);
+  return is_array($data) && isset($data['baseline'], $data['surveys']) ? $data : null;
+}
+
+function counterWriteState(array $state): bool {
+  $path = counterStatePath();
+  $tmp = $path . '.tmp';
+  if (@file_put_contents($tmp, json_encode($state, JSON_UNESCAPED_UNICODE), LOCK_EX) === false) return false;
+  return @rename($tmp, $path);
+}
+
 function counterEncode(array $payload): string {
   return json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n";
 }

@@ -1,9 +1,13 @@
 <?php
 // FASQ Counter – automatischer Abgleich mit LimeSurvey.
 //
-// Holt alle abgeschlossenen Antworten über die LimeSurvey RemoteControl-API (JSON-RPC),
-// zählt Erhebungen und Empfehlungen und schreibt counter.json lokal (sofort sichtbar)
-// sowie ins GitHub-Repo (nur wenn sich die Zahlen geändert haben).
+// Holt alle abgeschlossenen Antworten über die LimeSurvey RemoteControl-API (JSON-RPC)
+// und zählt NUR Antworten, die nach der Freischaltung abgeschlossen wurden:
+//   Anzeige = Startwerte (bisheriger Stand, z. B. 380 / 685) + neue Antworten.
+// Beim allerersten Lauf merkt sich das Skript die IDs aller bereits abgeschlossenen
+// Antworten (.sync-state.json) – diese werden nie gezählt. Der erste Lauf ändert die
+// Zahlen also nicht. Dasselbe gilt für eine später hinzugefügte Umfrage-ID.
+// Schreibt counter.json lokal (sofort sichtbar) und ins GitHub-Repo (nur bei Änderung).
 //
 // Aufrufwege:
 //   1. Cronjob auf dem Server (empfohlen):   php /pfad/zu/counter-api/sync_counter.php
@@ -172,7 +176,6 @@ function evaluateResponse(array $row, string $itemPattern, string $ageKey, strin
     'items' => $items,
     'equationMismatch' => $items > 0 && $byEquation !== null && $byEquation !== $byScore,
     'unscorable' => $items === 0 && $byEquation === null,
-    'submitdate' => (string)($row['submitdate'] ?? ''),
   ];
 }
 
@@ -182,11 +185,27 @@ function evaluateResponse(array $row, string $itemPattern, string $ageKey, strin
 $itemPattern = defined('COUNTER_ITEM_PATTERN') ? COUNTER_ITEM_PATTERN : '/^(G01Q\d+|r\d+q0)$/i';
 $ageKey = normKey(defined('COUNTER_AGE_FIELD') ? COUNTER_AGE_FIELD : 'G02Q02_SQ001');
 $equationKey = normKey(defined('COUNTER_EQUATION_FIELD') ? COUNTER_EQUATION_FIELD : 'G05Q83');
-$countFrom = defined('COUNTER_COUNT_FROM') ? (string)COUNTER_COUNT_FROM : '';
 $previous = counterReadLocal() ?? [];
 $since = defined('COUNTER_SINCE') ? (string)COUNTER_SINCE : (string)($previous['since'] ?? '2025-12-30');
 
-$totals = ['assessments' => 0, 'recommendations' => 0];
+// Zustand laden bzw. beim ersten Lauf anlegen
+$state = counterReadState();
+$firstRun = $state === null;
+if ($firstRun) {
+  $baseRecs = defined('COUNTER_BASELINE_RECOMMENDATIONS') ? COUNTER_BASELINE_RECOMMENDATIONS : ($previous['totalRecommendations'] ?? null);
+  $baseTotal = defined('COUNTER_BASELINE_ASSESSMENTS') ? COUNTER_BASELINE_ASSESSMENTS : ($previous['totalAssessments'] ?? null);
+  if (!is_int($baseRecs) || !is_int($baseTotal)) {
+    counterRespond(500, ['success' => false, 'error' => 'Startwerte fehlen: COUNTER_BASELINE_RECOMMENDATIONS und COUNTER_BASELINE_ASSESSMENTS in counter-config.php eintragen.']);
+  }
+  $state = [
+    'startedAt' => date('c'),
+    'baseline' => ['recommendations' => $baseRecs, 'assessments' => $baseTotal],
+    'surveys' => [],
+    'lastNew' => ['recommendations' => 0, 'assessments' => 0],
+  ];
+}
+
+$newCounts = ['assessments' => 0, 'recommendations' => 0];
 $perSurvey = [];
 $warnings = [];
 $session = null;
@@ -198,58 +217,82 @@ try {
   }
 
   foreach ((array)LIMESURVEY_SURVEY_IDS as $sid) {
-    $sid = (int)$sid;
-    $rows = lsExportComplete($session, $sid);
-    $s = ['assessments' => 0, 'recommendations' => 0, 'equationMismatch' => 0, 'unscorable' => 0];
+    $sid = (string)(int)$sid;
+    $rows = lsExportComplete($session, (int)$sid);
+    $ids = [];
     foreach ($rows as $row) {
+      if (!isset($row['id']) || !is_numeric($row['id'])) {
+        throw new RuntimeException('Umfrage ' . $sid . ': Antwort ohne ID im Export');
+      }
+      $ids[] = (int)$row['id'];
+    }
+
+    // Neue Umfrage (oder erster Lauf): alle bisherigen Antworten als „schon gezählt“ merken
+    $isNewSurvey = !isset($state['surveys'][$sid]);
+    if ($isNewSurvey) {
+      $state['surveys'][$sid] = ['addedAt' => date('c'), 'knownBefore' => count($ids), 'excluded' => $ids];
+    }
+    $excluded = array_flip($state['surveys'][$sid]['excluded']);
+
+    // Plausibilität: bekannte Umfrage liefert weniger Antworten als beim Start → Rechte/ID prüfen
+    if (!$isNewSurvey && !$force && count($ids) < (int)$state['surveys'][$sid]['knownBefore']) {
+      throw new RuntimeException('Umfrage ' . $sid . ' liefert nur ' . count($ids) . ' Antworten, beim Start waren es ' .
+        $state['surveys'][$sid]['knownBefore'] . '. Nichts geschrieben – Rechte des API-Benutzers prüfen (oder --force).');
+    }
+
+    $s = ['newAssessments' => 0, 'newRecommendations' => 0, 'ignoredFromBefore' => count($state['surveys'][$sid]['excluded']),
+          'equationMismatch' => 0, 'unscorable' => 0];
+    foreach ($rows as $row) {
+      if (isset($excluded[(int)$row['id']])) continue;
       $r = evaluateResponse($row, $itemPattern, $ageKey, $equationKey);
-      if ($countFrom !== '' && $r['submitdate'] !== '' && substr($r['submitdate'], 0, 10) < $countFrom) continue;
-      $s['assessments']++;
-      if ($r['recommended']) $s['recommendations']++;
+      $s['newAssessments']++;
+      if ($r['recommended']) $s['newRecommendations']++;
       if ($r['equationMismatch']) $s['equationMismatch']++;
       if ($r['unscorable']) $s['unscorable']++;
     }
-    if ($s['assessments'] > 0 && $s['unscorable'] === $s['assessments']) {
-      $warnings[] = "Umfrage $sid: keine FASQ-Items und keine Gleichungsfrage gefunden – Feldnamen prüfen.";
-    } elseif ($s['unscorable'] > 0) {
-      $warnings[] = "Umfrage $sid: {$s['unscorable']} Antworten ohne auswertbare Items.";
+    if ($s['unscorable'] > 0) {
+      $warnings[] = "Umfrage $sid: {$s['unscorable']} neue Antworten ohne auswertbare FASQ-Items – Feldnamen prüfen.";
     }
     if ($s['equationMismatch'] > 0) {
       $warnings[] = "Umfrage $sid: bei {$s['equationMismatch']} Antworten weicht G05Q83 vom berechneten Score ab (Score wurde verwendet).";
     }
+    if ($isNewSurvey && !$firstRun) {
+      $warnings[] = "Umfrage $sid neu aufgenommen: " . count($ids) . ' bestehende Antworten werden nicht gezählt, nur künftige.';
+    }
     $perSurvey[$sid] = $s;
-    $totals['assessments'] += $s['assessments'];
-    $totals['recommendations'] += $s['recommendations'];
+    $newCounts['assessments'] += $s['newAssessments'];
+    $newCounts['recommendations'] += $s['newRecommendations'];
   }
 } catch (RuntimeException $e) {
   syncLog('FEHLER ' . $e->getMessage());
+  if (is_string($session)) { try { lsCall('release_session_key', [$session]); } catch (RuntimeException $e2) {} }
   counterRespond(502, ['success' => false, 'error' => $e->getMessage()]);
-} finally {
-  if (is_string($session)) {
-    try { lsCall('release_session_key', [$session]); } catch (RuntimeException $e) { /* egal */ }
-  }
 }
+try { lsCall('release_session_key', [$session]); } catch (RuntimeException $e) { /* egal */ }
 
-// Plausibilität: Ein Absturz auf 0 deutet auf falsche Umfrage-ID oder Rechte hin.
-$prevTotal = (int)($previous['totalAssessments'] ?? 0);
-if (!$force && $totals['assessments'] === 0 && $prevTotal > 0) {
-  $msg = 'LimeSurvey liefert 0 Erhebungen (bisher ' . $prevTotal . '). Nichts geschrieben – Umfrage-IDs und Rechte des API-Benutzers prüfen, oder mit --force erzwingen.';
-  syncLog('ABBRUCH ' . $msg);
-  counterRespond(422, ['success' => false, 'error' => $msg, 'surveys' => $perSurvey]);
-}
+$totalRecs = $state['baseline']['recommendations'] + $newCounts['recommendations'];
+$totalAssess = $state['baseline']['assessments'] + $newCounts['assessments'];
+$changed = $totalRecs !== ($previous['totalRecommendations'] ?? null) || $totalAssess !== ($previous['totalAssessments'] ?? null);
 
 $payload = [
-  'totalRecommendations' => $totals['recommendations'],
-  'totalAssessments' => $totals['assessments'],
+  'totalRecommendations' => $totalRecs,
+  'totalAssessments' => $totalAssess,
   'since' => $since,
-  'lastUpdated' => date('Y-m-d'),
+  // „Letzte Aktualisierung“ = Tag, an dem sich die Zahlen zuletzt geändert haben
+  'lastUpdated' => $changed ? date('Y-m-d') : (string)($previous['lastUpdated'] ?? date('Y-m-d')),
   'source' => 'limesurvey',
   'lastSync' => date('c'),
   'comment' => COUNTER_COMMENT,
 ];
+$info = [
+  'baseline' => $state['baseline'],
+  'newSinceStart' => $newCounts,
+  'startedAt' => $state['startedAt'],
+  'firstRun' => $firstRun,
+];
 
 if ($dryRun) {
-  counterRespond(200, ['success' => true, 'dryRun' => true, 'counter' => $payload, 'surveys' => $perSurvey, 'warnings' => $warnings]);
+  counterRespond(200, ['success' => true, 'dryRun' => true, 'counter' => $payload] + $info + ['surveys' => $perSurvey, 'warnings' => $warnings]);
 }
 
 $content = counterEncode($payload);
@@ -257,26 +300,35 @@ $localOk = counterWriteLocal($content);
 if (!$localOk) $warnings[] = 'Lokale counter.json nicht beschreibbar: ' . counterLocalPath();
 
 $committed = false;
+$githubOk = true;
 try {
   $committed = counterWriteGithub(
     $content,
-    'Counter Sync: ' . $payload['totalRecommendations'] . ' Empfehlungen / ' . $payload['totalAssessments'] . ' Erhebungen (' . $payload['lastUpdated'] . ')',
+    'Counter Sync: ' . $totalRecs . ' Empfehlungen / ' . $totalAssess . ' Erhebungen (' . $payload['lastUpdated'] . ')',
     true
   );
 } catch (RuntimeException $e) {
+  $githubOk = false;
   $warnings[] = 'GitHub: ' . $e->getMessage();
-  if (!$localOk) {
-    syncLog('FEHLER weder lokal noch GitHub geschrieben: ' . $e->getMessage());
-    counterRespond(502, ['success' => false, 'error' => 'Weder lokal noch auf GitHub gespeichert', 'warnings' => $warnings]);
-  }
+}
+if (!$localOk && !$githubOk) {
+  syncLog('FEHLER weder lokal noch GitHub geschrieben');
+  counterRespond(502, ['success' => false, 'error' => 'Weder lokal noch auf GitHub gespeichert', 'warnings' => $warnings]);
 }
 
-syncLog(sprintf('OK %d/%d%s%s', $payload['totalRecommendations'], $payload['totalAssessments'],
+$state['lastNew'] = $newCounts;
+$state['lastSync'] = date('c');
+if (!counterWriteState($state)) {
+  syncLog('FEHLER Zustandsdatei nicht beschreibbar');
+  counterRespond(500, ['success' => false, 'error' => 'Zustandsdatei .sync-state.json nicht beschreibbar (Schreibrechte im Ordner counter-api prüfen)']);
+}
+
+syncLog(sprintf('%s %d/%d (Start %d/%d + neu %d/%d)%s%s', $firstRun ? 'START' : 'OK',
+  $totalRecs, $totalAssess, $state['baseline']['recommendations'], $state['baseline']['assessments'],
+  $newCounts['recommendations'], $newCounts['assessments'],
   $committed ? ' (GitHub aktualisiert)' : '', $warnings ? ' | ' . implode(' | ', $warnings) : ''));
 
-counterRespond(200, [
-  'success' => true,
-  'counter' => $payload,
+counterRespond(200, ['success' => true, 'counter' => $payload] + $info + [
   'surveys' => $perSurvey,
   'githubCommitted' => $committed,
   'warnings' => $warnings,

@@ -110,7 +110,7 @@
       el.textContent = 'Letzter Abgleich mit LimeSurvey: ' + formatDateTime(data.lastSync) +
         ' · ' + data.totalRecommendations + ' Empfehlungen / ' + data.totalAssessments + ' Erhebungen';
     } else if (data.source === 'manual') {
-      el.textContent = 'Aktuell manuell gesetzte Werte (' + formatDateTime(data.lastSync) + '). Der nächste Abgleich ersetzt sie.';
+      el.textContent = 'Manuell gepflegte Werte (' + formatDateTime(data.lastSync) + '). Automatischer Abgleich noch nicht gestartet.';
     } else {
       el.textContent = 'Noch kein automatischer Abgleich gelaufen (letzte manuelle Pflege: ' + (data.lastUpdated || '—') + ').';
     }
