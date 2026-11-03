@@ -181,7 +181,7 @@
   <main class="page admin-page">
     <header class="admin-hero">
       <h1>Counter-Admin</h1>
-      <p>Live-Zahlen für die Counter-Seite aktualisieren. Änderungen sind in 1-2 Minuten online.</p>
+      <p>Die Zahlen werden automatisch aus LimeSurvey abgeglichen. Hier sehen Sie den Stand und können einen Abgleich sofort auslösen.</p>
     </header>
 
     <section class="admin-card">
@@ -202,7 +202,19 @@
     </section>
 
     <section class="admin-card">
-      <h2>Werte aktualisieren</h2>
+      <h2>Automatischer Abgleich</h2>
+      <p id="sync-info" style="margin:0 0 12px;font-size:14px;">Stand wird geladen…</p>
+      <div class="admin-actions">
+        <button type="button" class="btn btn-primary" id="btn-sync">Jetzt aus LimeSurvey abgleichen</button>
+      </div>
+      <div class="status" id="sync-status"></div>
+    </section>
+
+    <section class="admin-card">
+      <h2>Werte manuell setzen</h2>
+      <p style="margin:0 0 12px;font-size:14px;color:var(--color-muted);">
+        Nur als Notlösung, falls der Abgleich nicht funktioniert. Der nächste automatische Abgleich überschreibt manuelle Werte.
+      </p>
 
       <form id="admin-form" class="admin-form">
         <label>
