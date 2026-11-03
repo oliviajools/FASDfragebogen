@@ -37,11 +37,12 @@ define('LIMESURVEY_URL', 'https://fasd-fz-hh.limesurvey.net/index.php/admin/remo
 define('LIMESURVEY_USER', 'counter-bot');
 define('LIMESURVEY_PASSWORD', 'HIER_PASSWORT_EINTRAGEN');
 
-// Alle Umfragen, deren NEUE Antworten gezählt werden. Die ID ist die Zahl in der Umfrage-URL:
+// Umfragen, deren NEUE Antworten gezählt werden. Die ID ist die Zahl in der Umfrage-URL:
 //   https://fasd-fz-hh.limesurvey.net/299374 → 299374
-// Antworten, die beim ersten Lauf schon da sind, werden nie gezählt – auch wenn eine ID
-// später ergänzt wird. Eine Umfrage zu viel aufzunehmen schadet also nicht.
-define('LIMESURVEY_SURVEY_IDS', [299374, 655176]);
+// NICHT eintragen: 655176 („FASQ.online … – ALT“). Sie enthält nur das Häkchen
+// „Umfrage beginnen“ und leitet alte Flyer-Links auf 299374 weiter – sonst doppelt gezählt.
+// Eine englische Umfrage mit eigener ID hier ergänzen.
+define('LIMESURVEY_SURVEY_IDS', [299374]);
 
 // Startwerte = Stand bei Freischaltung. Gezählt wird ab dann: Startwert + neue Antworten.
 define('COUNTER_BASELINE_RECOMMENDATIONS', 380);

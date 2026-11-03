@@ -245,13 +245,15 @@ try {
     foreach ($rows as $row) {
       if (isset($excluded[(int)$row['id']])) continue;
       $r = evaluateResponse($row, $itemPattern, $ageKey, $equationKey);
+      // Antworten ohne FASQ-Items (z. B. Weiterleitungs-Umfrage 655176 „ALT“, die nur ein
+      // Häkchen „Umfrage beginnen“ enthält) sind keine Erhebung und werden nicht gezählt.
+      if ($r['unscorable']) { $s['unscorable']++; continue; }
       $s['newAssessments']++;
       if ($r['recommended']) $s['newRecommendations']++;
       if ($r['equationMismatch']) $s['equationMismatch']++;
-      if ($r['unscorable']) $s['unscorable']++;
     }
     if ($s['unscorable'] > 0) {
-      $warnings[] = "Umfrage $sid: {$s['unscorable']} neue Antworten ohne auswertbare FASQ-Items – Feldnamen prüfen.";
+      $warnings[] = "Umfrage $sid: {$s['unscorable']} neue Antworten ohne FASQ-Items nicht gezählt – ist das eine Weiterleitungs-Umfrage? Dann ID aus LIMESURVEY_SURVEY_IDS entfernen.";
     }
     if ($s['equationMismatch'] > 0) {
       $warnings[] = "Umfrage $sid: bei {$s['equationMismatch']} Antworten weicht G05Q83 vom berechneten Score ab (Score wurde verwendet).";

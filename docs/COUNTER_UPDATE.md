@@ -21,7 +21,8 @@ docs/counter.json im GitHub-Repo  ──►  oliviajools.github.io/…/counter.h
   Beim ersten Lauf merkt sich das Skript die IDs aller bereits vorhandenen Antworten
   (`counter-api/.sync-state.json`); die werden nie mitgezählt. Der erste Lauf ändert die
   Zahlen also nicht. Gleiches gilt, wenn später eine weitere Umfrage-ID ergänzt wird.
-- **Neue Erhebung** = neu *abgeschlossene* Antwort einer konfigurierten Umfrage.
+- **Neue Erhebung** = neu *abgeschlossene* Antwort einer konfigurierten Umfrage, die FASQ-Items enthält.
+  Antworten ohne Items (z. B. aus einer Weiterleitungs-Umfrage) werden nicht gezählt.
 - **Neue Empfehlung** = Antwort mit Score ≥ 55, oder Score ≥ 45 bei Alter 2–5 Jahre.
   Der Score ist die Summe der Antwortcodes (0–3) aller FASQ-Items (`G01Q…` im
   KIDS-I-Pfad, `r…q0` im ERW-I-Pfad). Das ist dieselbe Regel wie in der Gleichungsfrage
@@ -71,7 +72,7 @@ docs/counter.json im GitHub-Repo  ──►  oliviajools.github.io/…/counter.h
 
 | Konstante | Bedeutung |
 |---|---|
-| `LIMESURVEY_SURVEY_IDS` | Liste der gezählten Umfragen, z. B. `[299374, 655176]` |
+| `LIMESURVEY_SURVEY_IDS` | Liste der gezählten Umfragen: `[299374]` (plus ggf. englische Umfrage). **Nicht** 655176 „– ALT“: die leitet nur alte Flyer-Links auf 299374 weiter und würde doppelt zählen. |
 | `COUNTER_BASELINE_RECOMMENDATIONS`, `COUNTER_BASELINE_ASSESSMENTS` | Startwerte bei Freischaltung (nur beim ersten Lauf gelesen) |
 | `COUNTER_SINCE` | Datum „Seit“ auf der Counter-Seite |
 | `SYNC_KEY` | Schlüssel für externe Cron-Dienste |
