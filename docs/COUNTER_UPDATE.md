@@ -72,7 +72,7 @@ docs/counter.json im GitHub-Repo  ──►  oliviajools.github.io/…/counter.h
 
 | Konstante | Bedeutung |
 |---|---|
-| `LIMESURVEY_SURVEY_IDS` | Liste der gezählten Umfragen: `[299374]` (plus ggf. englische Umfrage). **Nicht** 655176 „– ALT“: die leitet nur alte Flyer-Links auf 299374 weiter und würde doppelt zählen. |
+| `LIMESURVEY_SURVEY_IDS` | Liste der gezählten Umfragen: `[299374, 365113]` (deutsch + englisch). **Nicht** 655176 „– ALT“: die leitet nur alte Flyer-Links auf 299374 weiter und würde doppelt zählen. |
 | `COUNTER_BASELINE_RECOMMENDATIONS`, `COUNTER_BASELINE_ASSESSMENTS` | Startwerte bei Freischaltung (nur beim ersten Lauf gelesen) |
 | `COUNTER_SINCE` | Datum „Seit“ auf der Counter-Seite |
 | `SYNC_KEY` | Schlüssel für externe Cron-Dienste |

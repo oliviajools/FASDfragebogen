@@ -41,8 +41,8 @@ define('LIMESURVEY_PASSWORD', 'HIER_PASSWORT_EINTRAGEN');
 //   https://fasd-fz-hh.limesurvey.net/299374 → 299374
 // NICHT eintragen: 655176 („FASQ.online … – ALT“). Sie enthält nur das Häkchen
 // „Umfrage beginnen“ und leitet alte Flyer-Links auf 299374 weiter – sonst doppelt gezählt.
-// Eine englische Umfrage mit eigener ID hier ergänzen.
-define('LIMESURVEY_SURVEY_IDS', [299374]);
+// 365113 = FASQ.online (English), gleiche Fragecodes wie die deutsche Umfrage.
+define('LIMESURVEY_SURVEY_IDS', [299374, 365113]);
 
 // Startwerte = Stand bei Freischaltung. Gezählt wird ab dann: Startwert + neue Antworten.
 define('COUNTER_BASELINE_RECOMMENDATIONS', 380);
