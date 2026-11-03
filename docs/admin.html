@@ -192,7 +192,7 @@
         </p>
 
         <div id="token-input-row" style="margin-top: 12px;">
-          <input type="password" id="token-input" placeholder="Admin-Passwort" autocomplete="off" />
+          <input type="password" id="token-input" name="counter-admin-key" placeholder="Admin-Passwort (nicht das LimeSurvey-Passwort)" autocomplete="new-password" data-lpignore="true" data-1p-ignore />
           <div class="small-actions">
             <button type="button" class="btn btn-primary btn-small" id="btn-save-token">Passwort speichern</button>
             <button type="button" class="btn btn-small" id="btn-clear-token" style="background:#eee;color:#333;display:none;">Passwort löschen</button>
@@ -259,6 +259,6 @@
     </footer>
   </main>
 
-  <script src="admin.js?v=2"></script>
+  <script src="admin.js?v=3"></script>
 </body>
 </html>

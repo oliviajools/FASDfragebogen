@@ -175,9 +175,10 @@
         el.textContent = msg;
       })
       .catch(function (err) {
-        if (err.message === 'Falsches Passwort') setPassword('');
         el.className = 'status error';
-        el.textContent = 'Abgleich fehlgeschlagen: ' + err.message;
+        el.textContent = err.message === 'Falsches Passwort'
+          ? 'Abgleich fehlgeschlagen: Das gespeicherte Admin-Passwort ist falsch. Bitte oben ein neues eingeben und speichern.'
+          : 'Abgleich fehlgeschlagen: ' + err.message;
       })
       .finally(function () { btn.disabled = false; });
   }
@@ -219,8 +220,9 @@
         showStatus('✓ Erfolgreich gespeichert. Die Counter-Seite ist in 1-2 Minuten aktualisiert.', 'success');
       })
       .catch(function (err) {
-        if (err.message === 'Falsches Passwort') setPassword('');
-        showStatus('Fehler beim Speichern: ' + err.message, 'error');
+        showStatus(err.message === 'Falsches Passwort'
+          ? 'Fehler beim Speichern: Das gespeicherte Admin-Passwort ist falsch. Bitte oben ein neues eingeben und speichern.'
+          : 'Fehler beim Speichern: ' + err.message, 'error');
       })
       .finally(function () {
         document.getElementById('btn-save').disabled = false;
