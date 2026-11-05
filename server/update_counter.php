@@ -1,6 +1,6 @@
 <?php
 // FASQ Counter – manuelles Speichern aus admin.html.
-// Prüft das Admin-Passwort und schreibt counter.json lokal und via GitHub-API ins Repo.
+// Prüft das Admin-Passwort und schreibt counter.json neben die Counter-Seite.
 // Läuft der automatische Abgleich bereits, werden die Startwerte so angepasst, dass
 // die eingetragenen Zahlen gelten und künftige Antworten weiter dazugezählt werden.
 
@@ -56,12 +56,9 @@ $payload = [
 ];
 $content = counterEncode($payload);
 
-try {
-  counterWriteGithub($content, 'Counter Update (manuell): ' . $recs . ' Empfehlungen / ' . $total . ' Erhebungen (' . $updated . ')');
-} catch (RuntimeException $e) {
-  counterRespond(502, ['success' => false, 'error' => $e->getMessage()]);
+if (!counterWriteLocal($content)) {
+  counterRespond(500, ['success' => false, 'error' => 'counter.json nicht beschreibbar: ' . counterLocalPath()]);
 }
-counterWriteLocal($content);
 
 $state = counterReadState();
 if ($state !== null) {

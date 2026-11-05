@@ -1,10 +1,6 @@
 (function () {
   'use strict';
 
-  const REPO_OWNER = 'oliviajools';
-  const REPO_NAME = 'FASDfragebogen';
-  const FILE_PATH = 'docs/counter.json';
-  const BRANCH = 'main';
   const PASSWORD_KEY = 'fasq_admin_password';
   const API_URL = 'https://fasd-fachzentrum.hamburg/counter-api/update_counter.php';
   const SYNC_URL = 'https://fasd-fachzentrum.hamburg/counter-api/sync_counter.php';
@@ -89,7 +85,7 @@
     }
   }
 
-  // --- counter.json laden (lokale Datei zuerst, Fallback GitHub) ---
+  // --- counter.json laden ---
   function fetchJson(url) {
     return fetch(url + '?v=' + Date.now(), { cache: 'no-store' }).then(function (r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -127,10 +123,7 @@
 
   function loadCurrentValues() {
     showStatus('Aktuelle Werte werden geladen…', 'info');
-    const remoteUrl = 'https://raw.githubusercontent.com/' + REPO_OWNER + '/' + REPO_NAME +
-      '/' + BRANCH + '/' + FILE_PATH;
     fetchJson('counter.json')
-      .catch(function () { return fetchJson(remoteUrl); })
       .then(function (data) {
         applyValues(data);
         clearStatus();
@@ -184,7 +177,7 @@
   }
 
   // --- Speichern über den Server-Endpunkt ---
-  function saveToGitHub() {
+  function saveValues() {
     const password = getPassword();
     if (!password) {
       showStatus('Bitte zuerst das Admin-Passwort eingeben.', 'error');
@@ -217,7 +210,7 @@
         });
       })
       .then(function () {
-        showStatus('✓ Erfolgreich gespeichert. Die Counter-Seite ist in 1-2 Minuten aktualisiert.', 'success');
+        showStatus('✓ Gespeichert. Die Counter-Seite zeigt die neuen Werte sofort.', 'success');
       })
       .catch(function (err) {
         showStatus(err.message === 'Falsches Passwort'
@@ -273,7 +266,7 @@
       document.getElementById(id).addEventListener('input', updatePreview);
     });
 
-    document.getElementById('btn-save').addEventListener('click', saveToGitHub);
+    document.getElementById('btn-save').addEventListener('click', saveValues);
     document.getElementById('btn-download').addEventListener('click', downloadJson);
     document.getElementById('btn-reload').addEventListener('click', loadCurrentValues);
     document.getElementById('btn-sync').addEventListener('click', syncNow);

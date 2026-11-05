@@ -5,9 +5,10 @@
 // und zählt NUR Antworten, die nach der Freischaltung abgeschlossen wurden:
 //   Anzeige = Startwerte (bisheriger Stand, z. B. 380 / 685) + neue Antworten.
 // Beim allerersten Lauf merkt sich das Skript die IDs aller bereits abgeschlossenen
-// Antworten (.sync-state.json) – diese werden nie gezählt. Der erste Lauf ändert die
-// Zahlen also nicht. Dasselbe gilt für eine später hinzugefügte Umfrage-ID.
-// Schreibt counter.json lokal (sofort sichtbar) und ins GitHub-Repo (nur bei Änderung).
+// Antworten (.sync-state.json) – diese werden nie gezählt. Ist COUNTER_START_RESPONSES
+// gesetzt, werden stattdessen nur die ersten N Antworten je Umfrage übersprungen
+// (Stand zum vereinbarten Startzeitpunkt); alles danach zählt.
+// Schreibt counter.json neben die Counter-Seite (sofort sichtbar).
 //
 // Aufrufwege:
 //   1. Cronjob auf dem Server (empfohlen):   php /pfad/zu/counter-api/sync_counter.php
@@ -227,10 +228,24 @@ try {
       $ids[] = (int)$row['id'];
     }
 
-    // Neue Umfrage (oder erster Lauf): alle bisherigen Antworten als „schon gezählt“ merken
+    // Neue Umfrage (oder erster Lauf): bisherige Antworten als „schon gezählt“ merken.
+    // Mit COUNTER_START_RESPONSES nur die ersten N (Antwort-IDs steigen fortlaufend).
     $isNewSurvey = !isset($state['surveys'][$sid]);
     if ($isNewSurvey) {
-      $state['surveys'][$sid] = ['addedAt' => date('c'), 'knownBefore' => count($ids), 'excluded' => $ids];
+      $startCounts = defined('COUNTER_START_RESPONSES') ? (array)COUNTER_START_RESPONSES : [];
+      if (array_key_exists((int)$sid, $startCounts)) {
+        $n = (int)$startCounts[(int)$sid];
+        if ($n < 0 || $n > count($ids)) {
+          throw new RuntimeException('Umfrage ' . $sid . ' liefert ' . count($ids) . ' Antworten, als Startstand sind aber ' . $n .
+            ' eingetragen (COUNTER_START_RESPONSES). Nichts geschrieben – Wert prüfen.');
+        }
+        $sorted = $ids;
+        sort($sorted, SORT_NUMERIC);
+        $skip = array_slice($sorted, 0, $n);
+      } else {
+        $skip = $ids;
+      }
+      $state['surveys'][$sid] = ['addedAt' => date('c'), 'knownBefore' => count($skip), 'excluded' => $skip];
     }
     $excluded = array_flip($state['surveys'][$sid]['excluded']);
 
@@ -298,24 +313,9 @@ if ($dryRun) {
 }
 
 $content = counterEncode($payload);
-$localOk = counterWriteLocal($content);
-if (!$localOk) $warnings[] = 'Lokale counter.json nicht beschreibbar: ' . counterLocalPath();
-
-$committed = false;
-$githubOk = true;
-try {
-  $committed = counterWriteGithub(
-    $content,
-    'Counter Sync: ' . $totalRecs . ' Empfehlungen / ' . $totalAssess . ' Erhebungen (' . $payload['lastUpdated'] . ')',
-    true
-  );
-} catch (RuntimeException $e) {
-  $githubOk = false;
-  $warnings[] = 'GitHub: ' . $e->getMessage();
-}
-if (!$localOk && !$githubOk) {
-  syncLog('FEHLER weder lokal noch GitHub geschrieben');
-  counterRespond(502, ['success' => false, 'error' => 'Weder lokal noch auf GitHub gespeichert', 'warnings' => $warnings]);
+if (!counterWriteLocal($content)) {
+  syncLog('FEHLER counter.json nicht beschreibbar: ' . counterLocalPath());
+  counterRespond(500, ['success' => false, 'error' => 'counter.json nicht beschreibbar: ' . counterLocalPath() . ' (Schreibrechte im Ordner counter prüfen)']);
 }
 
 $state['lastNew'] = $newCounts;
@@ -325,14 +325,13 @@ if (!counterWriteState($state)) {
   counterRespond(500, ['success' => false, 'error' => 'Zustandsdatei .sync-state.json nicht beschreibbar (Schreibrechte im Ordner counter-api prüfen)']);
 }
 
-syncLog(sprintf('%s %d/%d (Start %d/%d + neu %d/%d)%s%s', $firstRun ? 'START' : 'OK',
+syncLog(sprintf('%s %d/%d (Start %d/%d + neu %d/%d)%s', $firstRun ? 'START' : 'OK',
   $totalRecs, $totalAssess, $state['baseline']['recommendations'], $state['baseline']['assessments'],
   $newCounts['recommendations'], $newCounts['assessments'],
-  $committed ? ' (GitHub aktualisiert)' : '', $warnings ? ' | ' . implode(' | ', $warnings) : ''));
+  $warnings ? ' | ' . implode(' | ', $warnings) : ''));
 
 counterRespond(200, ['success' => true, 'counter' => $payload] + $info + [
   'surveys' => $perSurvey,
-  'githubCommitted' => $committed,
   'warnings' => $warnings,
 ]);
 

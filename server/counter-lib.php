@@ -1,5 +1,6 @@
 <?php
 // Gemeinsame Funktionen für update_counter.php (manuell) und sync_counter.php (automatisch).
+// Einzige Datenquelle der Counter-Seite ist counter/counter.json auf diesem Server.
 
 declare(strict_types=1);
 
@@ -13,7 +14,7 @@ function counterLoadConfig(): void {
   require_once $configFile;
 }
 
-/** Pfad der lokalen counter.json neben der Counter-Seite (Fallback und schnellste Quelle). */
+/** Pfad der counter.json neben der Counter-Seite. */
 function counterLocalPath(): string {
   return defined('COUNTER_LOCAL_JSON') ? COUNTER_LOCAL_JSON : dirname(__DIR__) . '/counter/counter.json';
 }
@@ -57,64 +58,6 @@ function counterWriteLocal(string $content): bool {
   return @rename($tmp, $path);
 }
 
-function githubRequest(string $method, string $url, ?array $jsonBody = null): array {
-  $ch = curl_init($url);
-  $headers = [
-    'Authorization: token ' . GITHUB_TOKEN,
-    'Accept: application/vnd.github+json',
-    'User-Agent: fasq-counter-admin',
-  ];
-  if ($jsonBody !== null) {
-    $headers[] = 'Content-Type: application/json';
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($jsonBody));
-  }
-  curl_setopt_array($ch, [
-    CURLOPT_CUSTOMREQUEST => $method,
-    CURLOPT_HTTPHEADER => $headers,
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_TIMEOUT => 15,
-  ]);
-  $response = curl_exec($ch);
-  $status = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-  curl_close($ch);
-  return [$status, json_decode((string)$response, true) ?: []];
-}
-
-/**
- * Schreibt counter.json ins GitHub-Repo. Wirft bei Fehlern eine RuntimeException.
- * Mit $onlyIfChanged wird nur committet, wenn sich die Zahlen gegenüber dem Repo-Stand
- * geändert haben (verhindert stündliche Leer-Commits). Rückgabe: true = committet.
- */
-function counterWriteGithub(string $content, string $message, bool $onlyIfChanged = false): bool {
-  if (!defined('GITHUB_TOKEN') || GITHUB_TOKEN === '' || str_starts_with(GITHUB_TOKEN, 'github_pat_...')) {
-    throw new RuntimeException('GITHUB_TOKEN nicht konfiguriert');
-  }
-  $base = 'https://api.github.com/repos/' . GITHUB_REPO . '/contents/' . GITHUB_FILE;
-  [$status, $file] = githubRequest('GET', $base . '?ref=' . GITHUB_BRANCH);
-  if ($status !== 200 || empty($file['sha'])) {
-    throw new RuntimeException('GitHub-Lesefehler (HTTP ' . $status . ')');
-  }
-  if ($onlyIfChanged) {
-    $old = json_decode((string)base64_decode((string)($file['content'] ?? '')), true) ?: [];
-    $new = json_decode($content, true) ?: [];
-    $same = true;
-    foreach (['totalRecommendations', 'totalAssessments', 'since', 'source'] as $k) {
-      if (($old[$k] ?? null) !== ($new[$k] ?? null)) { $same = false; break; }
-    }
-    if ($same) return false;
-  }
-  [$status, $result] = githubRequest('PUT', $base, [
-    'message' => $message,
-    'content' => base64_encode($content),
-    'sha' => $file['sha'],
-    'branch' => GITHUB_BRANCH,
-  ]);
-  if ($status !== 200 && $status !== 201) {
-    throw new RuntimeException('GitHub-Schreibfehler (HTTP ' . $status . '): ' . ($result['message'] ?? ''));
-  }
-  return true;
-}
-
 /** Passwortprüfung mit Brute-Force-Schutz (max. 8 Fehlversuche pro IP in 15 Minuten). */
 function counterCheckPassword(string $password): bool {
   $attemptsFile = __DIR__ . '/.attempts.json';
@@ -148,7 +91,6 @@ function counterCors(): void {
   $allowedOrigins = [
     'https://fasd-fachzentrum.hamburg',
     'https://www.fasd-fachzentrum.hamburg',
-    'https://oliviajools.github.io',
   ];
   $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
   if (in_array($origin, $allowedOrigins, true)) {

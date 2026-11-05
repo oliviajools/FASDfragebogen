@@ -11,16 +11,19 @@ LimeSurvey (RemoteControl-API)
         │  stündlich: sync_counter.php
         ▼
 counter/counter.json auf fasd-fachzentrum.hamburg  ──►  counter.html (lädt alle 5 Min. neu)
-        │  nur wenn sich die Zahlen ändern
-        ▼
-docs/counter.json im GitHub-Repo  ──►  oliviajools.github.io/…/counter.html, Fallback
 ```
+
+Alle Dateien werden per FTP auf den Hetzner-Server geladen. GitHub ist nicht beteiligt;
+`docs/counter.json` im Repo wird nicht mehr aktualisiert.
 
 - **Gezählt wird nur, was nach der Freischaltung dazukommt.** Angezeigt wird
   Startwert (Stand bei Freischaltung, z. B. 380 / 685) + neu abgeschlossene Antworten.
   Beim ersten Lauf merkt sich das Skript die IDs aller bereits vorhandenen Antworten
-  (`counter-api/.sync-state.json`); die werden nie mitgezählt. Der erste Lauf ändert die
-  Zahlen also nicht. Gleiches gilt, wenn später eine weitere Umfrage-ID ergänzt wird.
+  (`counter-api/.sync-state.json`); die werden nie mitgezählt. Gleiches gilt, wenn später
+  eine weitere Umfrage-ID ergänzt wird.
+- **Startzeitpunkt 03.11.2026, 12:46:** `COUNTER_START_RESPONSES = [299374 => 362, 365113 => 23]`
+  (Stand laut Testlauf). Beim ersten Lauf werden nur diese ersten Antworten übersprungen;
+  Fragebögen, die danach abgeschlossen wurden, zählen mit – auch wenn der erste Lauf später stattfindet.
 - **Neue Erhebung** = neu *abgeschlossene* Antwort einer konfigurierten Umfrage, die FASQ-Items enthält.
   Antworten ohne Items (z. B. aus einer Weiterleitungs-Umfrage) werden nicht gezählt.
 - **Neue Empfehlung** = Antwort mit Score ≥ 55, oder Score ≥ 45 bei Alter 2–5 Jahre.
@@ -38,10 +41,12 @@ docs/counter.json im GitHub-Repo  ──►  oliviajools.github.io/…/counter.h
    auf die FASQ-Umfragen (deutsch und ggf. englisch). Keine weiteren Rechte nötig.
 3. **`counter-config.php` ergänzen** (Vorlage: `server/counter-config.example.php`):
    `LIMESURVEY_URL`, `LIMESURVEY_USER`, `LIMESURVEY_PASSWORD`, `LIMESURVEY_SURVEY_IDS`
-   sowie die Startwerte `COUNTER_BASELINE_RECOMMENDATIONS` / `COUNTER_BASELINE_ASSESSMENTS`.
+   sowie `COUNTER_BASELINE_RECOMMENDATIONS` / `COUNTER_BASELINE_ASSESSMENTS` und
+   `COUNTER_START_RESPONSES`.
 4. **Hochladen nach `/counter-api/`:** `counter-lib.php`, `sync_counter.php`,
    `update_counter.php`, `.htaccess`.
-   **Nach `/counter/`:** `counter.js`, `admin.html`, `admin.js`.
+   **Nach `/counter/`:** `counter.html`, `counter.js`, `admin.html`, `admin.js`.
+   Der Ordner `counter/` muss für PHP beschreibbar sein (dort liegt `counter.json`).
 5. **Testlauf** (rechnet nur, schreibt nichts):
    `php sync_counter.php --dry-run`
 6. **Cronjob** im Hosting-Panel, stündlich:
@@ -59,6 +64,8 @@ docs/counter.json im GitHub-Repo  ──►  oliviajools.github.io/…/counter.h
   neue Antworten werden weiter dazugezählt (die Startwerte werden intern angepasst).
 - **Neu beginnen** (z. B. falscher Startwert beim ersten Lauf): `.sync-state.json` löschen,
   Startwerte in der Config korrigieren, Abgleich erneut starten.
+- Nicht mehr benötigt: `GITHUB_TOKEN`, `GITHUB_REPO`, `GITHUB_FILE`, `GITHUB_BRANCH` in der
+  Config können gelöscht werden; das Token sollte auf GitHub widerrufen werden.
 - Protokoll der letzten Läufe: `counter-api/.sync.log` (nicht öffentlich abrufbar).
 
 ## Schutzmechanismen
@@ -66,7 +73,6 @@ docs/counter.json im GitHub-Repo  ──►  oliviajools.github.io/…/counter.h
 - Liefert eine Umfrage weniger Antworten als beim Start (Rechte entzogen, Antworten
   gelöscht), wird nichts geschrieben. Erzwingen: `--force`.
 - Ein Lauf gleichzeitig (Lock-Datei); über HTTP höchstens ein Lauf pro Minute.
-- GitHub bekommt nur dann einen Commit, wenn sich die Zahlen geändert haben.
 
 ## Optionen in `counter-config.php`
 
@@ -74,6 +80,7 @@ docs/counter.json im GitHub-Repo  ──►  oliviajools.github.io/…/counter.h
 |---|---|
 | `LIMESURVEY_SURVEY_IDS` | Liste der gezählten Umfragen: `[299374, 365113]` (deutsch + englisch). **Nicht** 655176 „– ALT“: die leitet nur alte Flyer-Links auf 299374 weiter und würde doppelt zählen. |
 | `COUNTER_BASELINE_RECOMMENDATIONS`, `COUNTER_BASELINE_ASSESSMENTS` | Startwerte bei Freischaltung (nur beim ersten Lauf gelesen) |
+| `COUNTER_START_RESPONSES` | Antworten je Umfrage zum Startzeitpunkt, die übersprungen werden (nur beim ersten Lauf gelesen) |
 | `COUNTER_SINCE` | Datum „Seit“ auf der Counter-Seite |
 | `SYNC_KEY` | Schlüssel für externe Cron-Dienste |
 | `COUNTER_ITEM_PATTERN`, `COUNTER_AGE_FIELD`, `COUNTER_EQUATION_FIELD` | Feldnamen, nur bei Umbau der Umfrage ändern |

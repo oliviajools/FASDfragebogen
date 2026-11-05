@@ -79,10 +79,9 @@
     console.error('[Counter]', message);
   }
 
-  // --- Daten laden: primär die Datei neben der Seite (wird vom Server-Abgleich
-  // sofort geschrieben), Fallback GitHub. Danach alle 5 Minuten erneut. ---
+  // --- Daten laden: counter.json neben der Seite (vom Server-Abgleich geschrieben).
+  // Danach alle 5 Minuten erneut. ---
   const REFRESH_MS = 5 * 60 * 1000;
-  const GITHUB_URL = 'https://raw.githubusercontent.com/oliviajools/FASDfragebogen/main/docs/counter.json';
   let hasData = false;
 
   function fetchJson(url) {
@@ -94,7 +93,6 @@
 
   function loadData() {
     fetchJson('counter.json')
-      .catch(function () { return fetchJson(GITHUB_URL); })
       .then(function (data) {
         hasData = true;
         applyData(data);

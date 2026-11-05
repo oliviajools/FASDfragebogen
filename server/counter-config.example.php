@@ -14,17 +14,6 @@ define('COUNTER_SALT', 'HIER_ZUFAELLIGEN_SALT_EINTRAGEN');
 define('COUNTER_PASSWORD_SHA256', 'HIER_HASH_EINTRAGEN');
 
 // ---------------------------------------------------------------------------
-// GitHub (Quelle für oliviajools.github.io und Fallback)
-// ---------------------------------------------------------------------------
-
-// GitHub Fine-grained Token (nur Contents: Read/Write auf das Repo)
-define('GITHUB_TOKEN', 'github_pat_...');
-
-define('GITHUB_REPO', 'oliviajools/FASDfragebogen');
-define('GITHUB_FILE', 'docs/counter.json');
-define('GITHUB_BRANCH', 'main');
-
-// ---------------------------------------------------------------------------
 // LimeSurvey – automatischer Abgleich (sync_counter.php)
 // ---------------------------------------------------------------------------
 
@@ -47,6 +36,12 @@ define('LIMESURVEY_SURVEY_IDS', [299374, 365113]);
 // Startwerte = Stand bei Freischaltung. Gezählt wird ab dann: Startwert + neue Antworten.
 define('COUNTER_BASELINE_RECOMMENDATIONS', 380);
 define('COUNTER_BASELINE_ASSESSMENTS', 685);
+
+// Anzahl abgeschlossener Antworten je Umfrage zum Startzeitpunkt (03.11.2026, 12:46,
+// laut Testlauf). Diese werden übersprungen, alles danach zählt. Ohne diese Zeile
+// werden beim ersten Lauf ALLE dann vorhandenen Antworten übersprungen.
+// Wird nur beim allerersten Lauf gelesen.
+define('COUNTER_START_RESPONSES', [299374 => 362, 365113 => 23]);
 
 // Anzeige „Seit“ auf der Counter-Seite
 define('COUNTER_SINCE', '2025-12-30');
