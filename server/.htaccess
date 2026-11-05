@@ -1,4 +1,4 @@
 # Konfiguration und interne Dateien niemals ausliefern
-<FilesMatch "^(counter-config\.php|counter-config\.example\.php|\.attempts\.json)$">
+<FilesMatch "^(counter-config\.php|counter-config\.example\.php|counter-lib\.php|\.attempts\.json|\.sync\.log|\.sync\.lock|\.sync-state\.json)$">
   Require all denied
 </FilesMatch>

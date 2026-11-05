@@ -22,10 +22,15 @@
       d.getFullYear();
   }
 
-  // --- Animierte Hochzählung ---
+  // --- Animierte Hochzählung (vom aktuell angezeigten Wert aus) ---
   function animateCount(el, target, duration) {
     if (!el) return;
-    const start = 0;
+    const start = Number(el.dataset.value || 0);
+    el.dataset.value = String(target);
+    if (start === target) {
+      el.textContent = target.toLocaleString('de-DE');
+      return;
+    }
     const startTime = performance.now();
     const easeOut = function (t) { return 1 - Math.pow(1 - t, 3); };
 
@@ -74,23 +79,40 @@
     console.error('[Counter]', message);
   }
 
-  // --- Daten laden: primär aus GitHub (zentrale Quelle), Fallback lokal ---
+  // --- Daten laden: primär die Datei neben der Seite (wird vom Server-Abgleich
+  // sofort geschrieben), Fallback GitHub. Danach alle 5 Minuten erneut. ---
+  const REFRESH_MS = 5 * 60 * 1000;
+  const GITHUB_URL = 'https://raw.githubusercontent.com/oliviajools/FASDfragebogen/main/docs/counter.json';
+  let hasData = false;
+
+  function fetchJson(url) {
+    return fetch(url + '?v=' + Date.now(), { cache: 'no-store' }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+  }
+
   function loadData() {
-    const remoteUrl = 'https://raw.githubusercontent.com/oliviajools/FASDfragebogen/main/docs/counter.json?v=' + Date.now();
-    fetch(remoteUrl, { cache: 'no-store' })
-      .then(function (r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r;
+    fetchJson('counter.json')
+      .catch(function () { return fetchJson(GITHUB_URL); })
+      .then(function (data) {
+        hasData = true;
+        applyData(data);
       })
-      .catch(function () {
-        return fetch('counter.json?v=' + Date.now(), { cache: 'no-store' });
-      })
-      .then(function (r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      })
-      .then(applyData)
-      .catch(function (err) { showError('Daten konnten nicht geladen werden: ' + err.message); });
+      .catch(function (err) {
+        // Bei späteren Fehlern die zuletzt angezeigten Zahlen stehen lassen.
+        if (!hasData) showError('Daten konnten nicht geladen werden: ' + err.message);
+        else console.warn('[Counter] Aktualisierung fehlgeschlagen:', err.message);
+      });
+  }
+
+  function startAutoRefresh() {
+    setInterval(function () {
+      if (document.visibilityState === 'visible') loadData();
+    }, REFRESH_MS);
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') loadData();
+    });
   }
 
   // --- Bootstrap ---
@@ -98,6 +120,7 @@
     const yearEl = document.getElementById('current-year');
     if (yearEl) yearEl.textContent = String(new Date().getFullYear());
     loadData();
+    startAutoRefresh();
   }
 
   if (document.readyState === 'loading') {

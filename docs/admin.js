@@ -7,6 +7,7 @@
   const BRANCH = 'main';
   const PASSWORD_KEY = 'fasq_admin_password';
   const API_URL = 'https://fasd-fachzentrum.hamburg/counter-api/update_counter.php';
+  const SYNC_URL = 'https://fasd-fachzentrum.hamburg/counter-api/sync_counter.php';
 
   // --- Passwort-Verwaltung ---
   function getPassword() {
@@ -71,7 +72,6 @@
       totalAssessments: total,
       since: since,
       lastUpdated: updated,
-      comment: 'totalRecommendations = Fragebögen mit positivem Befund. totalAssessments = Gesamtanzahl Erhebungen. Aktualisierbar über admin.html.'
     };
   }
 
@@ -89,31 +89,98 @@
     }
   }
 
-  // --- counter.json laden (immer aktueller Stand aus GitHub, Fallback lokal) ---
+  // --- counter.json laden (lokale Datei zuerst, Fallback GitHub) ---
+  function fetchJson(url) {
+    return fetch(url + '?v=' + Date.now(), { cache: 'no-store' }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+  }
+
+  function formatDateTime(iso) {
+    const d = new Date(iso);
+    if (!iso || isNaN(d.getTime())) return '—';
+    return d.toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' });
+  }
+
+  function showSyncInfo(data) {
+    const el = document.getElementById('sync-info');
+    if (!el) return;
+    if (data.source === 'limesurvey') {
+      el.textContent = 'Letzter Abgleich mit LimeSurvey: ' + formatDateTime(data.lastSync) +
+        ' · ' + data.totalRecommendations + ' Empfehlungen / ' + data.totalAssessments + ' Erhebungen';
+    } else if (data.source === 'manual') {
+      el.textContent = 'Manuell gepflegte Werte (' + formatDateTime(data.lastSync) + '). Automatischer Abgleich noch nicht gestartet.';
+    } else {
+      el.textContent = 'Noch kein automatischer Abgleich gelaufen (letzte manuelle Pflege: ' + (data.lastUpdated || '—') + ').';
+    }
+  }
+
+  function applyValues(data) {
+    document.getElementById('input-recommendations').value = data.totalRecommendations || 0;
+    document.getElementById('input-assessments').value = data.totalAssessments || 0;
+    document.getElementById('input-since').value = data.since || '2026-06-01';
+    document.getElementById('input-updated').value = todayISO();
+    showSyncInfo(data);
+    updatePreview();
+  }
+
   function loadCurrentValues() {
     showStatus('Aktuelle Werte werden geladen…', 'info');
     const remoteUrl = 'https://raw.githubusercontent.com/' + REPO_OWNER + '/' + REPO_NAME +
-      '/' + BRANCH + '/' + FILE_PATH + '?v=' + Date.now();
-    fetch(remoteUrl, { cache: 'no-store' })
-      .then(function (r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r;
-      })
-      .catch(function () {
-        return fetch('counter.json?v=' + Date.now(), { cache: 'no-store' });
-      })
-      .then(function (r) { return r.json(); })
+      '/' + BRANCH + '/' + FILE_PATH;
+    fetchJson('counter.json')
+      .catch(function () { return fetchJson(remoteUrl); })
       .then(function (data) {
-        document.getElementById('input-recommendations').value = data.totalRecommendations || 0;
-        document.getElementById('input-assessments').value = data.totalAssessments || 0;
-        document.getElementById('input-since').value = data.since || '2026-06-01';
-        document.getElementById('input-updated').value = todayISO();
-        updatePreview();
+        applyValues(data);
         clearStatus();
       })
       .catch(function (err) {
         showStatus('Konnte Werte nicht laden: ' + err.message, 'error');
       });
+  }
+
+  // --- Abgleich mit LimeSurvey sofort auslösen ---
+  function syncNow() {
+    const el = document.getElementById('sync-status');
+    const btn = document.getElementById('btn-sync');
+    const password = getPassword();
+    if (!password) {
+      el.className = 'status error';
+      el.textContent = 'Bitte zuerst das Admin-Passwort eingeben.';
+      return;
+    }
+    el.className = 'status info';
+    el.textContent = 'Abgleich läuft… (kann bis zu einer Minute dauern)';
+    btn.disabled = true;
+
+    fetch(SYNC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: password })
+    })
+      .then(function (r) {
+        return r.json().catch(function () { throw new Error('HTTP ' + r.status); }).then(function (data) {
+          if (!r.ok || !data.success) throw new Error(data.error || ('HTTP ' + r.status));
+          return data;
+        });
+      })
+      .then(function (data) {
+        const c = data.counter || {};
+        applyValues(c);
+        let msg = '✓ Abgeglichen: ' + c.totalRecommendations + ' Empfehlungen / ' + c.totalAssessments + ' Erhebungen.';
+        if (data.skipped) msg = '✓ ' + data.skipped + '. ' + msg;
+        if (data.warnings && data.warnings.length) msg += ' Hinweise: ' + data.warnings.join(' ');
+        el.className = 'status ' + (data.warnings && data.warnings.length ? 'info' : 'success');
+        el.textContent = msg;
+      })
+      .catch(function (err) {
+        el.className = 'status error';
+        el.textContent = err.message === 'Falsches Passwort'
+          ? 'Abgleich fehlgeschlagen: Das gespeicherte Admin-Passwort ist falsch. Bitte oben ein neues eingeben und speichern.'
+          : 'Abgleich fehlgeschlagen: ' + err.message;
+      })
+      .finally(function () { btn.disabled = false; });
   }
 
   // --- Speichern über den Server-Endpunkt ---
@@ -153,8 +220,9 @@
         showStatus('✓ Erfolgreich gespeichert. Die Counter-Seite ist in 1-2 Minuten aktualisiert.', 'success');
       })
       .catch(function (err) {
-        if (err.message === 'Falsches Passwort') setPassword('');
-        showStatus('Fehler beim Speichern: ' + err.message, 'error');
+        showStatus(err.message === 'Falsches Passwort'
+          ? 'Fehler beim Speichern: Das gespeicherte Admin-Passwort ist falsch. Bitte oben ein neues eingeben und speichern.'
+          : 'Fehler beim Speichern: ' + err.message, 'error');
       })
       .finally(function () {
         document.getElementById('btn-save').disabled = false;
@@ -208,6 +276,7 @@
     document.getElementById('btn-save').addEventListener('click', saveToGitHub);
     document.getElementById('btn-download').addEventListener('click', downloadJson);
     document.getElementById('btn-reload').addEventListener('click', loadCurrentValues);
+    document.getElementById('btn-sync').addEventListener('click', syncNow);
   }
 
   if (document.readyState === 'loading') {

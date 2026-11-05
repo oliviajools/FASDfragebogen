@@ -7,3 +7,7 @@
 # Geheime Server-Konfiguration (Passwort-Hash + GitHub-Token)
 server/counter-config.php
 docs/update_counter.php
+server/.attempts.json
+server/.sync.log
+server/.sync.lock
+server/.sync-state.json
